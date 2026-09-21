@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aufgaben-Übersicht</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <div class="brand-wrap">
+          <div class="brand-mark">SC</div>
+          <div>
+            <p class="eyebrow">Betrieb</p>
+            <h1>Spitex Cura Mobile</h1>
+          </div>
+        </div>
+
+        <nav class="topnav" aria-label="Hauptnavigation">
+          <a class="nav-item active" href="#overview">Übersicht</a>
+          <a class="nav-item" href="#employees">Mitarbeiter</a>
+          <a class="nav-item" href="#tasks">Aufgaben</a>
+          <a class="nav-item" href="#reviews">Bewertungen</a>
+        </nav>
+
+        <div class="profile-pill">
+          <span class="dot green"></span>
+          <div>
+            <strong>Dorothea El Ghobashy</strong>
+            <small>Teamleiter</small>
+          </div>
+        </div>
+      </header>
+
+      <main class="dashboard">
+        <section class="hero-panel" id="overview">
+          <div class="hero-copy">
+            <p class="eyebrow soft">Montagsübersicht</p>
+            <h2>Work is moving fast. Keep your team aligned.</h2>
+          </div>
+          <div class="hero-metrics" id="summaryStats"></div>
+        </section>
+
+        <section class="content-grid">
+          <div class="team-panel" id="employees">
+            <div class="section-header">
+              <div>
+                <p class="eyebrow soft">Mitarbeiter</p>
+                <h3>5 Teammitglieder</h3>
+              </div>
+              <button class="ghost-btn">Filter</button>
+            </div>
+
+            <div class="employee-list" id="employeeGrid"></div>
+          </div>
+
+          <aside class="review-panel" id="reviews">
+            <div class="review-header-row">
+              <span class="review-kicker">REVIEWER</span>
+              <button class="review-manage-btn" type="button">Manage</button>
+            </div>
+
+            <div class="review-summary-lite">
+              <div class="pending-pill" id="reviewPendingCount">5 pending</div>
+              <div class="approval-box">
+                <strong>96%</strong>
+                <span>approval rate</span>
+              </div>
+            </div>
+
+            <div class="checklist" id="reviewChecklist"></div>
+          </aside>
+        </section>
+
+        <section class="task-panel" id="tasks">
+          <div class="section-header">
+            <div>
+              <p class="eyebrow soft">Aufgabenboard</p>
+              <h3>5 Mitarbeiter • 50 Aufgaben</h3>
+            </div>
+            <button class="primary-btn" id="openCreateTaskModal" type="button">Aufgabe erstellen</button>
+          </div>
+
+          <div class="task-table-container">
+            <table class="task-table">
+              <thead>
+                <tr>
+                  <th>Mitarbeiter</th>
+                  <th>Aufgaben</th>
+                  <th>Prüfer</th>
+                </tr>
+              </thead>
+              <tbody id="taskTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="task-modal" id="taskModal" aria-hidden="true">
+      <div class="task-modal-card" role="dialog" aria-modal="true" aria-labelledby="taskModalTitle">
+        <div class="task-modal-header">
+          <h3 id="taskModalTitle">Aufgabe erstellen</h3>
+          <button class="close-modal" id="closeTaskModal" type="button" aria-label="Schließen">×</button>
+        </div>
+
+        <form id="taskForm">
+          <div class="field-group">
+            <label for="taskTitle">Titel</label>
+            <input id="taskTitle" name="taskTitle" type="text" placeholder="z. B. Kunden-Checkliste" required />
+          </div>
+
+          <div class="field-group">
+            <label for="employeeName">Mitarbeiter zuweisen</label>
+            <select id="employeeName" name="employeeName" required>
+              <option value="">Bitte wählen</option>
+              <option value="Anita 1">Anita 1</option>
+              <option value="Anita 2">Anita 2</option>
+              <option value="Anita 3">Anita 3</option>
+              <option value="Anita 4">Anita 4</option>
+              <option value="Anita 5">Anita 5</option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label for="taskStatus">Status</label>
+            <select id="taskStatus" name="taskStatus">
+              <option value="open">Offen</option>
+              <option value="in progress">In Bearbeitung</option>
+              <option value="done">Erledigt</option>
+              <option value="review">Review</option>
+              <option value="closed">Geschlossen</option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label for="taskDescription">Beschreibung</label>
+            <textarea id="taskDescription" name="taskDescription" rows="4" placeholder="Beschreibung der Aufgabe..."></textarea>
+          </div>
+
+          <div class="task-modal-actions">
+            <button type="button" class="secondary-btn" id="cancelTaskModal">Abbrechen</button>
+            <button type="submit" class="primary-btn">Erstellen</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
