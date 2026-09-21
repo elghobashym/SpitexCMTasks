@@ -32,12 +32,12 @@ form.addEventListener('submit', async (event) => {
       body: JSON.stringify({ username, password }),
       credentials: 'same-origin'
     });
-
-    const data = await response.json();
+      if (!response.ok || !data.ok) {
+        showError(data.error || 'Anmeldung fehlgeschlagen.');
 
     if (!response.ok || !data.success) {
       showError(data.message || 'Anmeldung fehlgeschlagen.');
-      return;
+      window.location.href = '/dashboard';
     }
 
     window.location.href = '/';
