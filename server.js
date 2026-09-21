@@ -20,7 +20,10 @@ app.use(session({
   }
 }));
 
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve static files but exclude index.html (it requires auth)
+app.use(express.static(path.join(__dirname, 'public'), {
+  index: false
+}));
 
 function requireAuth(req, res, next) {
   if (!req.session.user) {
