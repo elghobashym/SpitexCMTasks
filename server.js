@@ -145,7 +145,8 @@ app.post('/api/tasks', requireAuth, async (req, res) => {
   }
 });
 
-app.get('*', (req, res) => {
+// Catch-all for SPA routing (protected by auth)
+app.get('*', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
