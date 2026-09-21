@@ -1,5 +1,3 @@
-const fs = require('fs');
-const path = require('path');
 const { Pool } = require('pg');
 const crypto = require('crypto');
 
@@ -29,140 +27,18 @@ const employeeSeed = [
   { name: 'Anita 5', role: 'Customer Success', initials: 'A5', variant: 'alt5', review_status: 'review' }
 ];
 
-const adminUser = {
-  name: 'Dorothea El Ghobashy',
-  role: 'Manager',
-  initials: 'DE',
-  variant: 'manager',
-  review_status: 'review',
-  is_admin: true
-};
-
 const taskSeed = {
-  'Anita 1': [
-    'Landing page refresh',
-    'Homepage wireframe',
-    'Mobile icon pack',
-    'UX research summary',
-    'Feedback board clean-up',
-    'Color system pass',
-    'Prototype onboarding flow',
-    'A/B test variants',
-    'Content hierarchy update',
-    'Launch asset approval'
-  ],
-  'Anita 2': [
-    'Dashboard polish',
-    'Bug fix QA',
-    'Component library',
-    'Accessibility check',
-    'Performance audit',
-    'Responsive layout pass',
-    'Animation update',
-    'State management cleanup',
-    'Error handling pass',
-    'Release candidate check'
-  ],
-  'Anita 3': [
-    'Sprint planning',
-    'Vendor follow-ups',
-    'Budget review',
-    'Team capacity check',
-    'Roadmap alignment',
-    'Support escalation review',
-    'Hiring shortlist',
-    'Internal onboarding',
-    'Ops dashboard refresh',
-    'Quarterly forecast'
-  ],
-  'Anita 4': [
-    'Campaign assets',
-    'Launch checklist',
-    'Ad performance recap',
-    'Audience segmentation',
-    'Copy final pass',
-    'Brand guideline update',
-    'Social content plan',
-    'CRM newsletter',
-    'Landing page headline test',
-    'Launch campaign sync'
-  ],
-  'Anita 5': [
-    'Client onboarding',
-    'Retention notes',
-    'Renewal follow-up',
-    'Customer health scan',
-    'Success webinar prep',
-    'Feedback loop summary',
-    'Escalation handoff',
-    'Implementation checklist',
-    'Training deck refresh',
-    'Churn risk review'
-  ]
+  'Anita 1': ['Landing page refresh', 'Homepage wireframe', 'Mobile icon pack', 'UX research summary', 'Feedback board clean-up', 'Color system pass', 'Prototype onboarding flow', 'A/B test variants', 'Content hierarchy update', 'Launch asset approval'],
+  'Anita 2': ['Dashboard polish', 'Bug fix QA', 'Component library', 'Accessibility check', 'Performance audit', 'Responsive layout pass', 'Animation update', 'State management cleanup', 'Error handling pass', 'Release candidate check'],
+  'Anita 3': ['Sprint planning', 'Vendor follow-ups', 'Budget review', 'Team capacity check', 'Roadmap alignment', 'Support escalation review', 'Hiring shortlist', 'Internal onboarding', 'Ops dashboard refresh', 'Quarterly forecast'],
+  'Anita 4': ['Campaign assets', 'Launch checklist', 'Ad performance recap', 'Audience segmentation', 'Copy final pass', 'Brand guideline update', 'Social content plan', 'CRM newsletter', 'Landing page headline test', 'Launch campaign sync'],
+  'Anita 5': ['Client onboarding', 'Retention notes', 'Renewal follow-up', 'Customer health scan', 'Success webinar prep', 'Feedback loop summary', 'Escalation handoff', 'Implementation checklist', 'Training deck refresh', 'Churn risk review']
 };
 
-const initialStatuses = [
-  'done',
-  'in progress',
-  'review',
-  'done',
-  'open',
-  'done',
-  'in progress',
-  'review',
-  'closed',
-  'done'
-];
-
-async function ensureAdminEmployee(client) {
-  const existing = await client.query(
-    `SELECT * FROM employees WHERE LOWER(name) IN (LOWER($1), LOWER($2)) ORDER BY CASE WHEN LOWER(name) = LOWER($1) THEN 0 ELSE 1 END LIMIT 1`,
-    [adminUser.name, 'admin']
-  );
-
-  if (existing.rows.length === 0) {
-    await client.query(
-      `INSERT INTO employees (name, role, initials, variant, review_status, is_admin, password_hash)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [
-        adminUser.name,
-        adminUser.role,
-        adminUser.initials,
-        adminUser.variant,
-        adminUser.review_status,
-        adminUser.is_admin,
-        hashPassword('admin123')
-      ]
-    );
-    return;
-  }
-
-  const adminEmployee = existing.rows[0];
-  await client.query(
-    `UPDATE employees
-     SET name = $1,
-         role = $2,
-         initials = $3,
-         variant = $4,
-         review_status = $5,
-         is_admin = TRUE,
-         password_hash = $6
-     WHERE id = $7`,
-    [
-      adminUser.name,
-      adminUser.role,
-      adminUser.initials,
-      adminUser.variant,
-      adminUser.review_status,
-      hashPassword('admin123'),
-      adminEmployee.id
-    ]
-  );
-}
+const initialStatuses = ['done', 'in progress', 'review', 'done', 'open', 'done', 'in progress', 'review', 'closed', 'done'];
 
 async function initDb() {
   const client = await pool.connect();
-
   try {
     await client.query(`
       CREATE TABLE IF NOT EXISTS employees (
@@ -172,7 +48,6 @@ async function initDb() {
         initials TEXT,
         variant TEXT,
         review_status TEXT DEFAULT 'review',
-        is_admin BOOLEAN DEFAULT FALSE,
         password_hash TEXT DEFAULT ''
       )
     `);
@@ -187,52 +62,31 @@ async function initDb() {
       )
     `);
 
-    await client.query(`ALTER TABLE employees ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE`);
-
     const employeeCount = await client.query('SELECT COUNT(*) AS count FROM employees');
     if (Number(employeeCount.rows[0].count) === 0) {
       for (const employee of employeeSeed) {
         const employeeInsert = await client.query(
-          `INSERT INTO employees (name, role, initials, variant, review_status, is_admin, password_hash)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)
+          `INSERT INTO employees (name, role, initials, variant, review_status, password_hash)
+           VALUES ($1, $2, $3, $4, $5, $6)
            RETURNING id`,
-          [
-            employee.name,
-            employee.role,
-            employee.initials,
-            employee.variant,
-            employee.review_status,
-            false,
-            hashPassword(buildDefaultEmployeePassword(employee.name))
-          ]
+          [employee.name, employee.role, employee.initials, employee.variant, employee.review_status, hashPassword(buildDefaultEmployeePassword(employee.name))]
         );
-
         const employeeId = employeeInsert.rows[0].id;
         const taskNames = taskSeed[employee.name] || [];
-
         for (let index = 0; index < taskNames.length; index += 1) {
           const taskStatus = initialStatuses[index] || 'open';
           await client.query(
-            `INSERT INTO tasks (employee_id, label, status)
-             VALUES ($1, $2, $3)`,
+            `INSERT INTO tasks (employee_id, label, status) VALUES ($1, $2, $3)`,
             [employeeId, taskNames[index], taskStatus]
           );
         }
       }
     } else {
-      const employeesWithoutPassword = await client.query(
-        `SELECT id, name FROM employees WHERE password_hash IS NULL OR password_hash = ''`
-      );
-
+      const employeesWithoutPassword = await client.query(`SELECT id, name FROM employees WHERE password_hash IS NULL OR password_hash = ''`);
       for (const employee of employeesWithoutPassword.rows) {
-        await client.query(
-          `UPDATE employees SET password_hash = $1 WHERE id = $2`,
-          [hashPassword(buildDefaultEmployeePassword(employee.name)), employee.id]
-        );
+        await client.query(`UPDATE employees SET password_hash = $1 WHERE id = $2`, [hashPassword(buildDefaultEmployeePassword(employee.name)), employee.id]);
       }
     }
-
-    await ensureAdminEmployee(client);
   } finally {
     client.release();
   }
@@ -244,12 +98,9 @@ async function getEmployeesWithTasks() {
            t.id AS task_id, t.label AS task_label, t.description AS task_description, t.status AS task_status
     FROM employees e
     LEFT JOIN tasks t ON t.employee_id = e.id
-    WHERE e.is_admin IS NOT TRUE
     ORDER BY e.id, t.id
   `);
-
   const employeesMap = new Map();
-
   for (const row of result.rows) {
     if (!employeesMap.has(row.id)) {
       employeesMap.set(row.id, {
@@ -262,7 +113,6 @@ async function getEmployeesWithTasks() {
         tasks: []
       });
     }
-
     if (row.task_id) {
       employeesMap.get(row.id).tasks.push({
         id: row.task_id,
@@ -272,52 +122,25 @@ async function getEmployeesWithTasks() {
       });
     }
   }
-
   return Array.from(employeesMap.values());
 }
 
 async function updateTaskStatus(employeeId, taskId, newStatus) {
-  if (!statusOptions.includes(newStatus)) {
-    throw new Error('Invalid status');
-  }
-
-  const result = await pool.query(
-    `UPDATE tasks
-     SET status = $1
-     WHERE id = $2 AND employee_id = $3`,
-    [newStatus, taskId, employeeId]
-  );
-
-  if (result.rowCount === 0) {
-    throw new Error('Task not found');
-  }
-
+  if (!statusOptions.includes(newStatus)) throw new Error('Invalid status');
+  const result = await pool.query(`UPDATE tasks SET status = $1 WHERE id = $2 AND employee_id = $3`, [newStatus, taskId, employeeId]);
+  if (result.rowCount === 0) throw new Error('Task not found');
   if (newStatus === 'review') {
-    await pool.query(
-      `UPDATE employees
-       SET review_status = $1
-       WHERE id = $2`,
-      ['review', employeeId]
-    );
+    await pool.query(`UPDATE employees SET review_status = $1 WHERE id = $2`, ['review', employeeId]);
   }
 }
 
 async function createTask({ employeeId, label, description = '', status = 'open' }) {
-  if (!employeeId || !label) {
-    throw new Error('employeeId and label are required');
-  }
-
-  if (!statusOptions.includes(status)) {
-    throw new Error('Invalid status');
-  }
-
+  if (!employeeId || !label) throw new Error('employeeId and label are required');
+  if (!statusOptions.includes(status)) throw new Error('Invalid status');
   const result = await pool.query(
-    `INSERT INTO tasks (employee_id, label, description, status)
-     VALUES ($1, $2, $3, $4)
-     RETURNING *`,
+    `INSERT INTO tasks (employee_id, label, description, status) VALUES ($1, $2, $3, $4) RETURNING *`,
     [employeeId, label, description, status]
   );
-
   return result.rows[0];
 }
 
@@ -335,26 +158,15 @@ function buildDefaultEmployeePassword(name) {
 
 async function getEmployeeByLoginName(loginName, password) {
   const normalizedLogin = normalizeEmployeeName(loginName);
-  if (!normalizedLogin || !password) {
-    return null;
-  }
-
+  if (!normalizedLogin || !password) return null;
   const result = await pool.query(
     `SELECT * FROM employees WHERE LOWER(name) = $1 LIMIT 1`,
     [normalizedLogin]
   );
-
-  if (result.rows.length === 0) {
-    return null;
-  }
-
+  if (result.rows.length === 0) return null;
   const employee = result.rows[0];
   const expectedHash = hashPassword(buildDefaultEmployeePassword(employee.name));
-
-  if (hashPassword(password) !== expectedHash) {
-    return null;
-  }
-
+  if (hashPassword(password) !== expectedHash) return null;
   return employee;
 }
 
