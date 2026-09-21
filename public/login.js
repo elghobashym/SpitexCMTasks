@@ -32,17 +32,17 @@ form.addEventListener('submit', async (event) => {
       body: JSON.stringify({ username, password }),
       credentials: 'same-origin'
     });
-      if (!response.ok || !data.ok) {
-        showError(data.error || 'Anmeldung fehlgeschlagen.');
 
-    if (!response.ok || !data.success) {
-      showError(data.message || 'Anmeldung fehlgeschlagen.');
-      window.location.href = '/dashboard';
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      showError(data.error || 'Anmeldung fehlgeschlagen.');
+      return;
     }
 
-    window.location.href = '/';
+    window.location.href = '/dashboard';
   } catch (error) {
-    showError('Login konnte nicht verarbeitet werden. Bitte später erneut versuchen.');
+    showError('Login konnte nicht verarbeitet werden. Bitte spaeter erneut versuchen.');
   }
 });
 
