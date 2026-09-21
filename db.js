@@ -339,17 +339,34 @@ async function getEmployeeByLoginName(loginName, password) {
     return null;
   }
 
-  const candidateNames = [...new Set([
-    normalizedLogin,
-    'admin',
-    'dorothea',
-    'dorotheaelghobashy',
-    normalizeEmployeeName(adminUser.name)
-  ].filter(Boolean))];
-
   const result = await pool.query(
-    `SELECT * FROM employees WHERE LOWER(name) = ANY($1::text[]) LIMIT 1`,
-    [candidateNames]
+    `SELECT * FROM employees WHERE LOWER(name) = $1 LIMIT 1`,
+    [normalizedLogin]
   );
 
-  if
+  if (result.rows.length === 0) {
+    return null;
+  }
+
+  const employee = result.rows[0];
+  const expectedHash = hashPassword(buildDefaultEmployeePassword(employee.name));
+
+  if (hashPassword(password) !== expectedHash) {
+    return null;
+  }
+
+  return employee;
+}
+
+module.exports = {
+  initDb,
+  getEmployeesWithTasks,
+  updateTaskStatus,
+  createTask,
+  getEmployeeByLoginName,
+  pool,
+  statusOptions,
+  hashPassword,
+  normalizeEmployeeName,
+  buildDefaultEmployeePassword
+};
