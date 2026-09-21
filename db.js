@@ -182,16 +182,3 @@ module.exports = {
   normalizeEmployeeName,
   buildDefaultEmployeePassword
 };
-
-module.exports = {
-  initDb,
-  getEmployeesWithTasks,
-  updateTaskStatus,
-  createTask,
-  getEmployeeByLoginName,
-  pool,
-  statusOptions,
-  hashPassword,
-  normalizeEmployeeName,
-  buildDefaultEmployeePassword
-};
