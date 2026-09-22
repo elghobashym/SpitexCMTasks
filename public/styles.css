@@ -257,6 +257,45 @@ h3 {
   margin-bottom: 8px;
 }
 
+.task-panel .section-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.task-panel .section-header > div {
+  min-width: 0;
+}
+
+.task-panel .section-header h3 {
+  font-size: 1.45rem;
+  letter-spacing: -0.05em;
+  line-height: 1.05;
+  margin: 0;
+}
+
+.task-panel .section-header .eyebrow {
+  margin-bottom: 6px;
+}
+
+.task-panel .section-header .primary-btn {
+  align-self: center;
+  white-space: nowrap;
+  min-height: 46px;
+  padding: 0 18px;
+  border-radius: 14px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow: 0 10px 24px rgba(122, 92, 60, 0.18);
+}
+
+.task-panel .section-header .primary-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(122, 92, 60, 0.22);
+}
+
 .review-header-row {
   display: flex;
   align-items: center;
