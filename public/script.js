@@ -1,7 +1,6 @@
 const statusOptions = [
   { value: 'open', label: 'Offen' },
   { value: 'in progress', label: 'In Bearbeitung' },
-  { value: 'done', label: 'Erledigt' },
   { value: 'review', label: 'Review' },
   { value: 'closed', label: 'Geschlossen' }
 ];
@@ -43,15 +42,15 @@ function getSupabaseClient() {
 
 function renderSummary() {
   const totalTasks = employees.reduce((sum, employee) => sum + employee.tasks.length, 0);
-  const doneTasks = employees.reduce(
-    (sum, employee) => sum + employee.tasks.filter((task) => task.status === 'done').length,
+  const reviewTasks = employees.reduce(
+    (sum, employee) => sum + employee.tasks.filter((task) => task.status === 'review').length,
     0
   );
 
   summaryStatsBlock.innerHTML = `
     <div class="metric-card">
-      <strong>${Math.round((doneTasks / totalTasks) * 100) || 0}%</strong>
-      <span>Abschluss</span>
+      <strong>${Math.round((reviewTasks / totalTasks) * 100) || 0}%</strong>
+      <span>Review</span>
     </div>
     <div class="metric-card">
       <strong>${totalTasks}</strong>
@@ -77,8 +76,8 @@ function renderEmployeeCards() {
                 <small>${employee.role}</small>
               </div>
             </div>
-            <span class="employee-chip ${employee.reviewStatus === 'review' ? 'pending' : ''}">
-              ${employee.reviewStatus === 'review' ? 'Review' : 'Auf Kurs'}
+            <span class="employee-chip">
+              ${employee.tasks.filter((task) => task.status !== 'closed').length} Aufgaben
             </span>
           </div>
 

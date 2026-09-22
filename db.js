@@ -17,7 +17,7 @@ const pool = new Pool({
     : false
 });
 
-const statusOptions = ['open', 'in progress', 'done', 'review', 'closed'];
+const statusOptions = ['open', 'in progress', 'review', 'closed'];
 
 const employeeSeed = [
   { name: 'Ewelina', role: 'Pfleger/in', initials: 'EW', variant: 'alt1', review_status: 'review' },
@@ -33,7 +33,7 @@ const taskSeed = {
   'Dorothea': ['Manage patient caseload', 'Staff scheduling', 'Quality oversight', 'Budget planning', 'Staff meetings coordination', 'Compliance review', 'Training organization', 'Client communication', 'Strategic planning', 'Performance review']
 };
 
-const initialStatuses = ['done', 'in progress', 'review', 'done', 'open', 'done', 'in progress', 'review', 'open', 'done'];
+const initialStatuses = ['open', 'in progress', 'review', 'open', 'open', 'in progress', 'review', 'open', 'open', 'open'];
 
 async function initDb() {
   const client = await pool.connect();
@@ -84,6 +84,17 @@ async function initDb() {
         }
       }
     }
+
+    await client.query(`DELETE FROM tasks WHERE status = 'closed'`);
+
+    const dorotheaResult = await client.query(`SELECT id FROM employees WHERE name = $1 LIMIT 1`, ['Dorothea']);
+    if (dorotheaResult.rows.length > 0) {
+      const dorotheaId = dorotheaResult.rows[0].id;
+      await client.query(
+        `UPDATE tasks SET employee_id = $1 WHERE status = 'review' AND employee_id <> $1`,
+        [dorotheaId]
+      );
+    }
   } finally {
     client.release();
   }
@@ -130,11 +141,20 @@ async function updateTaskStatus(employeeId, taskId, newStatus) {
     if (deleteResult.rowCount === 0) throw new Error('Task not found');
     return;
   }
+  if (newStatus === 'review') {
+    const dorotheaResult = await pool.query(`SELECT id FROM employees WHERE name = $1 LIMIT 1`, ['Dorothea']);
+    if (dorotheaResult.rows.length === 0) throw new Error('Dorothea not found');
+    const dorotheaId = dorotheaResult.rows[0].id;
+    const result = await pool.query(
+      `UPDATE tasks SET status = $1, employee_id = $4 WHERE id = $2 AND employee_id = $3`,
+      [newStatus, taskId, employeeId, dorotheaId]
+    );
+    if (result.rowCount === 0) throw new Error('Task not found');
+    await pool.query(`UPDATE employees SET review_status = $1 WHERE id = $2`, ['review', dorotheaId]);
+    return;
+  }
   const result = await pool.query(`UPDATE tasks SET status = $1 WHERE id = $2 AND employee_id = $3`, [newStatus, taskId, employeeId]);
   if (result.rowCount === 0) throw new Error('Task not found');
-  if (newStatus === 'review') {
-    await pool.query(`UPDATE employees SET review_status = $1 WHERE id = $2`, ['review', employeeId]);
-  }
 }
 
 async function createTask({ employeeId, label, description = '', status = 'open' }) {
