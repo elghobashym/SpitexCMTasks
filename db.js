@@ -38,10 +38,6 @@ const initialStatuses = ['open', 'in progress', 'review', 'open', 'open', 'in pr
 async function initDb() {
   const client = await pool.connect();
   try {
-    // Drop existing tables to reinitialize with new seed data
-    await client.query('DROP TABLE IF EXISTS tasks CASCADE');
-    await client.query('DROP TABLE IF EXISTS employees CASCADE');
-
     await client.query(`
       CREATE TABLE IF NOT EXISTS employees (
         id SERIAL PRIMARY KEY,
