@@ -81,7 +81,18 @@ async function initDb() {
       }
     }
 
+    await client.query(
+      `UPDATE employees SET role = 'Admin' WHERE name = ANY($1::text[])`,
+      [['Ewelina', 'Selma']]
+    );
+
     await client.query(`DELETE FROM tasks WHERE status = 'closed'`);
+
+    await client.query(
+      `UPDATE tasks
+       SET label = REPLACE(REPLACE(label, 'B�ro', 'Büro'), 'BÃ¼ro', 'Büro')
+       WHERE label LIKE '%B�ro%' OR label LIKE '%BÃ¼ro%'`
+    );
 
     const dorotheaResult = await client.query(`SELECT id FROM employees WHERE name = $1 LIMIT 1`, ['Dorothea']);
     if (dorotheaResult.rows.length > 0) {
