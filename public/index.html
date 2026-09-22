@@ -27,12 +27,15 @@
           <a class="nav-item" href="#reviews">Bewertungen</a>
         </nav>
 
-        <div class="profile-pill">
-          <span class="dot green"></span>
-          <div>
-            <strong>Dorothea El Ghobashy</strong>
-            <small>Teamleiter</small>
+        <div class="topbar-actions">
+          <div class="profile-pill">
+            <span class="dot green"></span>
+            <div>
+              <strong>Dorothea El Ghobashy</strong>
+              <small>Teamleiter</small>
+            </div>
           </div>
+          <button class="logout-btn" id="logoutButton" type="button">Abmelden</button>
         </div>
       </header>
 
@@ -48,11 +51,11 @@
         <section class="content-grid">
           <div class="team-panel" id="employees">
             <div class="section-header">
-              <button class="primary-btn" id="openCreateTaskModal" type="button">Aufgaben erstellen</button>
               <div>
                 <p class="eyebrow soft">Mitarbeiter</p>
                 <h3 id="employeesHeading">Teammitglieder</h3>
               </div>
+              <button class="primary-btn" id="openCreateTaskModal" type="button">Aufgaben erstellen</button>
             </div>
 
             <div class="employee-list" id="employeeGrid"></div>

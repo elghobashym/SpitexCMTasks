@@ -17,6 +17,7 @@ const overviewLabel = document.getElementById('overviewLabel');
 const employeesHeading = document.getElementById('employeesHeading');
 const tasksHeading = document.getElementById('tasksHeading');
 const createTaskButton = document.getElementById('openCreateTaskModal');
+const logoutButton = document.getElementById('logoutButton');
 const taskModal = document.getElementById('taskModal');
 const taskForm = document.getElementById('taskForm');
 const closeTaskModalButton = document.getElementById('closeTaskModal');
@@ -404,7 +405,30 @@ async function createTaskInDatabase(employeeId, title, description, status) {
   return createTaskInSupabase(employeeId, title, description, status);
 }
 
+async function logout() {
+  const response = await fetch('/api/logout', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error('Logout failed');
+  }
+
+  window.location.href = '/login';
+}
+
 createTaskButton?.addEventListener('click', openTaskModal);
+logoutButton?.addEventListener('click', async () => {
+  try {
+    await logout();
+  } catch (error) {
+    console.error(error);
+    alert('Abmeldung konnte nicht durchgeführt werden.');
+  }
+});
 closeTaskModalButton?.addEventListener('click', closeTaskModal);
 cancelTaskModalButton?.addEventListener('click', closeTaskModal);
 taskModal?.addEventListener('click', (event) => {
