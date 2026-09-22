@@ -203,6 +203,21 @@ h3 {
   gap: 22px;
 }
 
+body.employee-only-view .topnav,
+body.employee-only-view .review-panel,
+body.employee-only-view .task-panel,
+body.employee-only-view #openCreateTaskModal {
+  display: none !important;
+}
+
+body.employee-only-view .content-grid {
+  grid-template-columns: 1fr;
+}
+
+body.employee-only-view .team-panel .section-header {
+  justify-content: flex-start;
+}
+
 .hero-panel {
   display: flex;
   align-items: flex-end;

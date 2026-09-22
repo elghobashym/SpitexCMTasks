@@ -33,11 +33,15 @@ function requireAuth(req, res, next) {
   return next();
 }
 
+function isDorothea(user) {
+  return Boolean(user && user.name === 'Dorothea');
+}
+
 app.get('/health', (req, res) => {
   res.json({ ok: true, status: 'healthy' });
 });
 
-app.get('/api/me', (req, res) => {
+app.get('/api/me', requireAuth, (req, res) => {
   res.json({ user: req.session.user || null });
 });
 
@@ -99,7 +103,12 @@ app.get('/dashboard', requireAuth, (req, res) => {
 app.get('/api/employees', requireAuth, async (req, res) => {
   try {
     const employees = await getEmployeesWithTasks();
-    res.json(employees);
+    if (isDorothea(req.session.user)) {
+      return res.json(employees);
+    }
+
+    const ownEmployee = employees.filter((employee) => employee.id === req.session.user.id);
+    return res.json(ownEmployee);
   } catch (error) {
     console.error('Failed to load employees:', error);
     res.status(500).json({ error: 'Failed to load employees' });
@@ -115,6 +124,10 @@ app.put('/api/tasks/:id/status', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'employeeId and status are required' });
     }
 
+    if (!isDorothea(req.session.user) && Number(employeeId) !== req.session.user.id) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
     await updateTaskStatus(Number(employeeId), taskId, status);
     res.json({ ok: true });
   } catch (error) {
@@ -125,6 +138,10 @@ app.put('/api/tasks/:id/status', requireAuth, async (req, res) => {
 
 app.post('/api/tasks', requireAuth, async (req, res) => {
   try {
+    if (!isDorothea(req.session.user)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
     const { employeeId, title, description, status } = req.body;
 
     if (!employeeId || !title) {
@@ -147,6 +164,10 @@ app.post('/api/tasks', requireAuth, async (req, res) => {
 
 app.post('/api/generate-weekly-tasks', requireAuth, async (req, res) => {
   try {
+    if (!isDorothea(req.session.user)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
     await createImmediateWeeklyTasks();
     res.json({ ok: true, message: 'Weekly tasks generated successfully for this week' });
   } catch (error) {

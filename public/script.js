@@ -14,16 +14,68 @@ const taskTableBody = document.getElementById('taskTableBody');
 const reviewChecklist = document.getElementById('reviewChecklist');
 const summaryStatsBlock = document.getElementById('summaryStats');
 const overviewLabel = document.getElementById('overviewLabel');
+const overviewTitle = document.getElementById('overviewTitle');
 const employeesHeading = document.getElementById('employeesHeading');
 const tasksHeading = document.getElementById('tasksHeading');
 const createTaskButton = document.getElementById('openCreateTaskModal');
 const logoutButton = document.getElementById('logoutButton');
+const currentUserName = document.getElementById('currentUserName');
+const currentUserRole = document.getElementById('currentUserRole');
 const taskModal = document.getElementById('taskModal');
 const taskForm = document.getElementById('taskForm');
 const closeTaskModalButton = document.getElementById('closeTaskModal');
 const cancelTaskModalButton = document.getElementById('cancelTaskModal');
+const reviewPanel = document.getElementById('reviews');
+const taskPanel = document.getElementById('tasks');
+const topnav = document.querySelector('.topnav');
 
 let employees = [];
+let currentUser = null;
+
+function isDorotheaView() {
+  return currentUser?.name === 'Dorothea';
+}
+
+function applyUserView() {
+  if (currentUserName && currentUser) {
+    currentUserName.textContent = currentUser.name;
+  }
+
+  if (currentUserRole && currentUser) {
+    currentUserRole.textContent = currentUser.role;
+  }
+
+  if (isDorotheaView()) {
+    document.body.classList.remove('employee-only-view');
+    return;
+  }
+
+  document.body.classList.add('employee-only-view');
+
+  if (overviewTitle) {
+    overviewTitle.textContent = 'Hier sind deine aktuellen Aufgaben.';
+  }
+
+  if (employeesHeading) {
+    employeesHeading.textContent = 'Meine Aufgaben';
+  }
+}
+
+async function loadCurrentUser() {
+  const response = await fetch('/api/me');
+  if (!response.ok) {
+    throw new Error('Current user lookup failed');
+  }
+
+  const data = await response.json();
+  if (!data.user) {
+    window.location.href = '/login';
+    return;
+  }
+
+  currentUser = data.user;
+  applyUserView();
+}
 
 function setOverviewLabel() {
   if (!overviewLabel) return;
@@ -44,6 +96,26 @@ function getSupabaseClient() {
 }
 
 function renderSummary() {
+  if (!isDorotheaView()) {
+    const totalTasks = employees.reduce((sum, employee) => sum + employee.tasks.length, 0);
+    const reviewTasks = employees.reduce(
+      (sum, employee) => sum + employee.tasks.filter((task) => task.status === 'review').length,
+      0
+    );
+
+    summaryStatsBlock.innerHTML = `
+      <div class="metric-card">
+        <strong>${totalTasks}</strong>
+        <span>Meine Aufgaben</span>
+      </div>
+      <div class="metric-card">
+        <strong>${reviewTasks}</strong>
+        <span>Im Review</span>
+      </div>
+    `;
+    return;
+  }
+
   const totalTasks = employees.reduce((sum, employee) => sum + employee.tasks.length, 0);
   const reviewTasks = employees.reduce(
     (sum, employee) => sum + employee.tasks.filter((task) => task.status === 'review').length,
@@ -67,6 +139,13 @@ function renderSummary() {
 }
 
 function updateSectionHeadings() {
+  if (!isDorotheaView()) {
+    if (tasksHeading) {
+      tasksHeading.textContent = 'Meine Aufgaben';
+    }
+    return;
+  }
+
   if (employeesHeading) {
     employeesHeading.textContent = `${employees.length} Teammitglieder`;
   }
@@ -198,8 +277,10 @@ function renderDashboard() {
   updateSectionHeadings();
   renderSummary();
   renderEmployeeCards();
-  renderReviewChecklist();
-  renderTaskBoard();
+  if (isDorotheaView()) {
+    renderReviewChecklist();
+    renderTaskBoard();
+  }
 }
 
 function hasSupabaseConfig() {
@@ -478,6 +559,7 @@ document.addEventListener('change', async (event) => {
 
 (async () => {
   try {
+    await loadCurrentUser();
     await loadEmployees();
   } catch (error) {
     console.error(error);
