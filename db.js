@@ -207,6 +207,14 @@ const weeklyTaskTitles = [
   'Dienstplan Kontrolle'
 ];
 
+function getWeeklyTaskTitlesForEmployee(employeeName) {
+  if (employeeName === 'Praktikantin') {
+    return [...weeklyTaskTitles, 'Büro Check'];
+  }
+
+  return weeklyTaskTitles;
+}
+
 async function createWeeklyTasks() {
   try {
     // Delete closed tasks first
@@ -238,7 +246,7 @@ async function createWeeklyTasks() {
         const day = String(date.getDate()).padStart(2, '0');
         const month = String(date.getMonth() + 1).padStart(2, '0');
         
-        for (const taskTitle of weeklyTaskTitles) {
+        for (const taskTitle of getWeeklyTaskTitlesForEmployee(employee.name)) {
           const taskLabel = `${day}.${month} - ${taskTitle}`;
 
           await pool.query(
@@ -249,7 +257,7 @@ async function createWeeklyTasks() {
       }
     }
 
-    console.log(`Weekly tasks created for ${employees.length} employees (${weeklyTaskTitles.length} tasks × 5 days)`);
+    console.log(`Weekly tasks created for ${employees.length} employees`);
   } catch (error) {
     console.error('Failed to create weekly tasks:', error);
   }
@@ -305,7 +313,7 @@ async function createImmediateWeeklyTasks() {
         const day = String(date.getDate()).padStart(2, '0');
         const month = String(date.getMonth() + 1).padStart(2, '0');
         
-        for (const taskTitle of weeklyTaskTitles) {
+        for (const taskTitle of getWeeklyTaskTitlesForEmployee(employee.name)) {
           const taskLabel = `${day}.${month} - ${taskTitle}`;
 
           await pool.query(
@@ -316,7 +324,7 @@ async function createImmediateWeeklyTasks() {
       }
     }
 
-    console.log(`Immediate weekly tasks created for ${employees.length} employees (${weeklyTaskTitles.length} tasks × 5 days)`);
+    console.log(`Immediate weekly tasks created for ${employees.length} employees`);
   } catch (error) {
     console.error('Failed to create immediate weekly tasks:', error);
   }
