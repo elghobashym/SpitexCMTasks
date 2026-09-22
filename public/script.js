@@ -344,25 +344,6 @@ function closeTaskModal() {
   }
 }
 
-function addTaskToEmployee(employeeName, title, description, status) {
-  const employee = employees.find((person) => person.name === employeeName);
-
-  if (!employee) {
-    return;
-  }
-
-  employee.tasks.push({
-    id: Date.now() + Math.random(),
-    label: title,
-    description: description || '',
-    status: status || 'open'
-  });
-
-  if (status === 'review') {
-    employee.reviewStatus = 'review';
-  }
-}
-
 async function createTaskInLocalApi(employeeId, title, description, status) {
   const response = await fetch('/api/tasks', {
     method: 'POST',
@@ -380,21 +361,29 @@ async function createTaskInLocalApi(employeeId, title, description, status) {
   if (!response.ok) {
     throw new Error('Local task creation failed');
   }
+
+  return response.json();
 }
 
 async function createTaskInSupabase(employeeId, title, description, status) {
   const supabase = getSupabaseClient();
 
-  const { error } = await supabase.from('tasks').insert({
-    employee_id: employeeId,
-    label: title,
-    description,
-    status
-  });
+  const { data, error } = await supabase
+    .from('tasks')
+    .insert({
+      employee_id: employeeId,
+      label: title,
+      description,
+      status
+    })
+    .select()
+    .single();
 
   if (error) {
     throw error;
   }
+
+  return data;
 }
 
 async function createTaskInDatabase(employeeId, title, description, status) {
@@ -457,15 +446,15 @@ taskForm?.addEventListener('submit', async (event) => {
     return;
   }
 
-  addTaskToEmployee(employeeName, title, description, status);
-
   try {
     await createTaskInDatabase(employee.id, title, description, status);
+    await loadEmployees();
   } catch (error) {
-    console.warn('Task konnte nur lokal hinzugefügt werden:', error);
+    console.error(error);
+    alert('Aufgabe konnte nicht erstellt werden. Prüfe die Datenbankverbindung.');
+    return;
   }
 
-  renderDashboard();
   closeTaskModal();
 });
 
