@@ -167,6 +167,74 @@ async function getEmployeeByLoginName(loginName, password) {
   return employee;
 }
 
+async function deleteClosedTasks() {
+  try {
+    await pool.query('DELETE FROM tasks WHERE status = $1', ['closed']);
+    console.log('Cleaned up closed tasks');
+  } catch (error) {
+    console.error('Failed to delete closed tasks:', error);
+  }
+}
+
+async function createWeeklyTasks() {
+  try {
+    // Delete closed tasks first
+    await deleteClosedTasks();
+
+    // Get all employees
+    const employeesResult = await pool.query('SELECT id, name FROM employees');
+    const employees = employeesResult.rows;
+
+    // Calculate next week's dates (Monday to Friday)
+    const today = new Date();
+    const nextSunday = new Date(today);
+    nextSunday.setDate(today.getDate() + (7 - today.getDay()));
+    
+    // Start from Monday of the next week
+    const mondayDate = new Date(nextSunday);
+    mondayDate.setDate(nextSunday.getDate() + 1);
+
+    const weekDays = [];
+    for (let i = 0; i < 5; i++) {
+      const date = new Date(mondayDate);
+      date.setDate(mondayDate.getDate() + i);
+      weekDays.push(date);
+    }
+
+    // Create tasks for each employee for each weekday
+    for (const employee of employees) {
+      for (const date of weekDays) {
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const taskLabel = `${day}.${month} - ${employee.name}`;
+
+        await pool.query(
+          `INSERT INTO tasks (employee_id, label, status) VALUES ($1, $2, $3)`,
+          [employee.id, taskLabel, 'open']
+        );
+      }
+    }
+
+    console.log(`Weekly tasks created for ${employees.length} employees`);
+  } catch (error) {
+    console.error('Failed to create weekly tasks:', error);
+  }
+}
+
+// Initialize weekly task scheduler
+function initWeeklyTaskScheduler() {
+  const schedule = require('node-schedule');
+  
+  // Schedule for every Sunday at 22:00 (10 PM)
+  const job = schedule.scheduleJob('0 22 * * 0', async () => {
+    console.log('Running weekly task creation...');
+    await createWeeklyTasks();
+  });
+
+  console.log('Weekly task scheduler initialized (runs every Sunday at 10 PM)');
+  return job;
+}
+
 module.exports = {
   initDb,
   getEmployeesWithTasks,
@@ -177,5 +245,8 @@ module.exports = {
   statusOptions,
   hashPassword,
   normalizeEmployeeName,
-  buildDefaultEmployeePassword
+  buildDefaultEmployeePassword,
+  createWeeklyTasks,
+  deleteClosedTasks,
+  initWeeklyTaskScheduler
 };

@@ -1,7 +1,7 @@
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
-const { initDb, getEmployeesWithTasks, updateTaskStatus, createTask, getEmployeeByLoginName } = require('./db');
+const { initDb, getEmployeesWithTasks, updateTaskStatus, createTask, getEmployeeByLoginName, initWeeklyTaskScheduler } = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -153,6 +153,7 @@ app.get('*', requireAuth, (req, res) => {
 (async () => {
   try {
     await initDb();
+    initWeeklyTaskScheduler();
     app.listen(PORT, HOST, () => {
       console.log(`Server running at http://localhost:${PORT}`);
       console.log(`LAN access: http://${HOST === '0.0.0.0' ? 'YOUR_LOCAL_IP' : HOST}:${PORT}`);
