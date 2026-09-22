@@ -14,6 +14,8 @@ const taskTableBody = document.getElementById('taskTableBody');
 const reviewChecklist = document.getElementById('reviewChecklist');
 const summaryStatsBlock = document.getElementById('summaryStats');
 const overviewLabel = document.getElementById('overviewLabel');
+const employeesHeading = document.getElementById('employeesHeading');
+const tasksHeading = document.getElementById('tasksHeading');
 const createTaskButton = document.getElementById('openCreateTaskModal');
 const taskModal = document.getElementById('taskModal');
 const taskForm = document.getElementById('taskForm');
@@ -61,6 +63,17 @@ function renderSummary() {
       <span>Mitarbeiter</span>
     </div>
   `;
+}
+
+function updateSectionHeadings() {
+  if (employeesHeading) {
+    employeesHeading.textContent = `${employees.length} Teammitglieder`;
+  }
+
+  if (tasksHeading) {
+    const totalTasks = employees.reduce((sum, employee) => sum + employee.tasks.length, 0);
+    tasksHeading.textContent = `${employees.length} Mitarbeiter • ${totalTasks} Aufgaben`;
+  }
 }
 
 function renderEmployeeCards() {
@@ -181,6 +194,7 @@ function renderTaskBoard() {
 }
 
 function renderDashboard() {
+  updateSectionHeadings();
   renderSummary();
   renderEmployeeCards();
   renderReviewChecklist();
