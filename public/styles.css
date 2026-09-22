@@ -436,8 +436,11 @@ h3 {
   border-radius: 26px;
   background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(248,243,239,0.92));
   border: 1px solid rgba(30, 31, 37, 0.05);
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
   gap: 16px;
+  min-height: 360px;
   box-shadow: var(--shadow-soft);
 }
 
@@ -497,8 +500,10 @@ h3 {
 }
 
 .employee-tasks {
+  flex: 1;
   display: grid;
   gap: 10px;
+  align-content: start;
 }
 
 .task-bullet {
