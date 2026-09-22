@@ -77,6 +77,7 @@ function renderEmployeeCards() {
 
           <div class="employee-tasks">
             ${employee.tasks
+              .filter((task) => task.status !== 'closed')
               .map(
                 (task) => `
                   <div class="task-bullet">

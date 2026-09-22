@@ -1,7 +1,7 @@
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
-const { initDb, getEmployeesWithTasks, updateTaskStatus, createTask, getEmployeeByLoginName, initWeeklyTaskScheduler } = require('./db');
+const { initDb, getEmployeesWithTasks, updateTaskStatus, createTask, getEmployeeByLoginName, initWeeklyTaskScheduler, createWeeklyTasks } = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -142,6 +142,16 @@ app.post('/api/tasks', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Failed to create task:', error);
     res.status(500).json({ error: 'Failed to create task' });
+  }
+});
+
+app.post('/api/generate-weekly-tasks', requireAuth, async (req, res) => {
+  try {
+    await createWeeklyTasks();
+    res.json({ ok: true, message: 'Weekly tasks generated successfully' });
+  } catch (error) {
+    console.error('Failed to generate weekly tasks:', error);
+    res.status(500).json({ error: 'Failed to generate weekly tasks' });
   }
 });
 
