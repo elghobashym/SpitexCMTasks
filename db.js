@@ -247,6 +247,59 @@ function initWeeklyTaskScheduler() {
   return job;
 }
 
+async function createImmediateWeeklyTasks() {
+  try {
+    // Delete closed tasks first
+    await deleteClosedTasks();
+
+    // Get all employees
+    const employeesResult = await pool.query('SELECT id, name FROM employees');
+    const employees = employeesResult.rows;
+
+    // Calculate current week's dates (Monday to Friday starting from today or next Monday)
+    const today = new Date();
+    let startDate = new Date(today);
+    
+    // If today is not Monday (0=Sunday, 1=Monday...), move to Monday
+    const dayOfWeek = today.getDay();
+    if (dayOfWeek === 0) {
+      // Sunday - start from tomorrow (Monday)
+      startDate.setDate(today.getDate() + 1);
+    } else if (dayOfWeek !== 1) {
+      // Not Monday/Sunday - move back to Monday of this week
+      startDate.setDate(today.getDate() - (dayOfWeek - 1));
+    }
+
+    const weekDays = [];
+    for (let i = 0; i < 5; i++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
+      weekDays.push(date);
+    }
+
+    // Create tasks for each employee, each weekday, and each task title
+    for (const employee of employees) {
+      for (const date of weekDays) {
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        
+        for (const taskTitle of weeklyTaskTitles) {
+          const taskLabel = `${day}.${month} - ${taskTitle}`;
+
+          await pool.query(
+            `INSERT INTO tasks (employee_id, label, status) VALUES ($1, $2, $3)`,
+            [employee.id, taskLabel, 'open']
+          );
+        }
+      }
+    }
+
+    console.log(`Immediate weekly tasks created for ${employees.length} employees (${weeklyTaskTitles.length} tasks × 5 days)`);
+  } catch (error) {
+    console.error('Failed to create immediate weekly tasks:', error);
+  }
+}
+
 module.exports = {
   initDb,
   getEmployeesWithTasks,
@@ -260,5 +313,6 @@ module.exports = {
   buildDefaultEmployeePassword,
   createWeeklyTasks,
   deleteClosedTasks,
-  initWeeklyTaskScheduler
+  initWeeklyTaskScheduler,
+  createImmediateWeeklyTasks
 };
