@@ -20,19 +20,17 @@ const pool = new Pool({
 const statusOptions = ['open', 'in progress', 'done', 'review', 'closed'];
 
 const employeeSeed = [
-  { name: 'Anita 1', role: 'Product Designer', initials: 'A1', variant: 'alt1', review_status: 'review' },
-  { name: 'Anita 2', role: 'Frontend Engineer', initials: 'A2', variant: 'alt2', review_status: 'review' },
-  { name: 'Anita 3', role: 'Operations Lead', initials: 'A3', variant: 'alt3', review_status: 'review' },
-  { name: 'Anita 4', role: 'Marketing', initials: 'A4', variant: 'alt4', review_status: 'review' },
-  { name: 'Anita 5', role: 'Customer Success', initials: 'A5', variant: 'alt5', review_status: 'review' }
+  { name: 'Ewelina', role: 'Pfleger/in', initials: 'EW', variant: 'alt1', review_status: 'review' },
+  { name: 'Selma', role: 'Pfleger/in', initials: 'SE', variant: 'alt2', review_status: 'review' },
+  { name: 'Praktikantin', role: 'Praktikant/in', initials: 'PR', variant: 'alt3', review_status: 'review' },
+  { name: 'Dorothea', role: 'Manager', initials: 'DO', variant: 'alt4', review_status: 'review' }
 ];
 
 const taskSeed = {
-  'Anita 1': ['Landing page refresh', 'Homepage wireframe', 'Mobile icon pack', 'UX research summary', 'Feedback board clean-up', 'Color system pass', 'Prototype onboarding flow', 'A/B test variants', 'Content hierarchy update', 'Launch asset approval'],
-  'Anita 2': ['Dashboard polish', 'Bug fix QA', 'Component library', 'Accessibility check', 'Performance audit', 'Responsive layout pass', 'Animation update', 'State management cleanup', 'Error handling pass', 'Release candidate check'],
-  'Anita 3': ['Sprint planning', 'Vendor follow-ups', 'Budget review', 'Team capacity check', 'Roadmap alignment', 'Support escalation review', 'Hiring shortlist', 'Internal onboarding', 'Ops dashboard refresh', 'Quarterly forecast'],
-  'Anita 4': ['Campaign assets', 'Launch checklist', 'Ad performance recap', 'Audience segmentation', 'Copy final pass', 'Brand guideline update', 'Social content plan', 'CRM newsletter', 'Landing page headline test', 'Launch campaign sync'],
-  'Anita 5': ['Client onboarding', 'Retention notes', 'Renewal follow-up', 'Customer health scan', 'Success webinar prep', 'Feedback loop summary', 'Escalation handoff', 'Implementation checklist', 'Training deck refresh', 'Churn risk review']
+  'Ewelina': ['Patient morning care', 'Medical documentation', 'Medication delivery', 'Wound care check', 'Patient communication', 'Equipment maintenance', 'Team handover notes', 'Care plan review', 'Follow-up calls', 'End of shift report'],
+  'Selma': ['Patient evening care', 'Vitals monitoring', 'Appointment scheduling', 'Supply order', 'Staff coordination', 'Patient comfort check', 'Health assessment', 'Family communication', 'Quality assurance', 'Shift summary'],
+  'Praktikantin': ['Assist with patient care', 'Clean and organize', 'Shadow experienced staff', 'Administrative support', 'Documentation training', 'Patient observation', 'Equipment cleaning', 'Database updates', 'General support', 'Knowledge gathering'],
+  'Dorothea': ['Manage patient caseload', 'Staff scheduling', 'Quality oversight', 'Budget planning', 'Staff meetings coordination', 'Compliance review', 'Training organization', 'Client communication', 'Strategic planning', 'Performance review']
 };
 
 const initialStatuses = ['done', 'in progress', 'review', 'done', 'open', 'done', 'in progress', 'review', 'closed', 'done'];
@@ -40,6 +38,10 @@ const initialStatuses = ['done', 'in progress', 'review', 'done', 'open', 'done'
 async function initDb() {
   const client = await pool.connect();
   try {
+    // Drop existing tables to reinitialize with new seed data
+    await client.query('DROP TABLE IF EXISTS tasks CASCADE');
+    await client.query('DROP TABLE IF EXISTS employees CASCADE');
+
     await client.query(`
       CREATE TABLE IF NOT EXISTS employees (
         id SERIAL PRIMARY KEY,
@@ -80,11 +82,6 @@ async function initDb() {
             [employeeId, taskNames[index], taskStatus]
           );
         }
-      }
-    } else {
-      const employeesWithoutPassword = await client.query(`SELECT id, name FROM employees WHERE password_hash IS NULL OR password_hash = ''`);
-      for (const employee of employeesWithoutPassword.rows) {
-        await client.query(`UPDATE employees SET password_hash = $1 WHERE id = $2`, [hashPassword(buildDefaultEmployeePassword(employee.name)), employee.id]);
       }
     }
   } finally {
