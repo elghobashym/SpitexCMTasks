@@ -176,6 +176,15 @@ async function deleteClosedTasks() {
   }
 }
 
+const weeklyTaskTitles = [
+  'Pflegeberichte WE kontr. - Rückmeldung Dora',
+  'Pflegeberichte kontr. - Rückmeldung Dora',
+  'Kunden Termine eintragen',
+  'Apothekenbestellung',
+  'Dienstplan Kontrolle vor dem WE',
+  'Dienstplan Kontrolle'
+];
+
 async function createWeeklyTasks() {
   try {
     // Delete closed tasks first
@@ -201,21 +210,24 @@ async function createWeeklyTasks() {
       weekDays.push(date);
     }
 
-    // Create tasks for each employee for each weekday
+    // Create tasks for each employee, each weekday, and each task title
     for (const employee of employees) {
       for (const date of weekDays) {
         const day = String(date.getDate()).padStart(2, '0');
         const month = String(date.getMonth() + 1).padStart(2, '0');
-        const taskLabel = `${day}.${month} - ${employee.name}`;
+        
+        for (const taskTitle of weeklyTaskTitles) {
+          const taskLabel = `${day}.${month} - ${taskTitle}`;
 
-        await pool.query(
-          `INSERT INTO tasks (employee_id, label, status) VALUES ($1, $2, $3)`,
-          [employee.id, taskLabel, 'open']
-        );
+          await pool.query(
+            `INSERT INTO tasks (employee_id, label, status) VALUES ($1, $2, $3)`,
+            [employee.id, taskLabel, 'open']
+          );
+        }
       }
     }
 
-    console.log(`Weekly tasks created for ${employees.length} employees`);
+    console.log(`Weekly tasks created for ${employees.length} employees (${weeklyTaskTitles.length} tasks × 5 days)`);
   } catch (error) {
     console.error('Failed to create weekly tasks:', error);
   }
