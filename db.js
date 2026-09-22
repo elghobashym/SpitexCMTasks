@@ -33,7 +33,7 @@ const taskSeed = {
   'Dorothea': ['Manage patient caseload', 'Staff scheduling', 'Quality oversight', 'Budget planning', 'Staff meetings coordination', 'Compliance review', 'Training organization', 'Client communication', 'Strategic planning', 'Performance review']
 };
 
-const initialStatuses = ['done', 'in progress', 'review', 'done', 'open', 'done', 'in progress', 'review', 'closed', 'done'];
+const initialStatuses = ['done', 'in progress', 'review', 'done', 'open', 'done', 'in progress', 'review', 'open', 'done'];
 
 async function initDb() {
   const client = await pool.connect();
@@ -95,6 +95,7 @@ async function getEmployeesWithTasks() {
            t.id AS task_id, t.label AS task_label, t.description AS task_description, t.status AS task_status
     FROM employees e
     LEFT JOIN tasks t ON t.employee_id = e.id
+    WHERE t.id IS NULL OR t.status <> 'closed'
     ORDER BY e.id, t.id
   `);
   const employeesMap = new Map();
@@ -124,6 +125,11 @@ async function getEmployeesWithTasks() {
 
 async function updateTaskStatus(employeeId, taskId, newStatus) {
   if (!statusOptions.includes(newStatus)) throw new Error('Invalid status');
+  if (newStatus === 'closed') {
+    const deleteResult = await pool.query(`DELETE FROM tasks WHERE id = $1 AND employee_id = $2`, [taskId, employeeId]);
+    if (deleteResult.rowCount === 0) throw new Error('Task not found');
+    return;
+  }
   const result = await pool.query(`UPDATE tasks SET status = $1 WHERE id = $2 AND employee_id = $3`, [newStatus, taskId, employeeId]);
   if (result.rowCount === 0) throw new Error('Task not found');
   if (newStatus === 'review') {

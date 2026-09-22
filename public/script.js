@@ -14,6 +14,7 @@ const employeeGrid = document.getElementById('employeeGrid');
 const taskTableBody = document.getElementById('taskTableBody');
 const reviewChecklist = document.getElementById('reviewChecklist');
 const summaryStatsBlock = document.getElementById('summaryStats');
+const overviewLabel = document.getElementById('overviewLabel');
 const createTaskButton = document.getElementById('openCreateTaskModal');
 const taskModal = document.getElementById('taskModal');
 const taskForm = document.getElementById('taskForm');
@@ -21,6 +22,12 @@ const closeTaskModalButton = document.getElementById('closeTaskModal');
 const cancelTaskModalButton = document.getElementById('cancelTaskModal');
 
 let employees = [];
+
+function setOverviewLabel() {
+  if (!overviewLabel) return;
+  const weekday = new Intl.DateTimeFormat('de-DE', { weekday: 'long' }).format(new Date());
+  overviewLabel.textContent = `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)}sübersicht`;
+}
 
 function statusToClassName(status) {
   return String(status).trim().toLowerCase().replace(/\s+/g, '-');
@@ -257,6 +264,8 @@ async function loadEmployees() {
 
   renderDashboard();
 }
+
+setOverviewLabel();
 
 async function saveTaskStatusLocal(employeeId, taskId, selectedStatus) {
   const response = await fetch(`/api/tasks/${taskId}/status`, {
