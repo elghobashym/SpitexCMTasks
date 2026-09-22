@@ -39,6 +39,8 @@
         background: var(--panel);
         border: 1px solid rgba(255,255,255,0.82);
         border-radius: 28px;
+        -webkit-backdrop-filter: blur(14px);
+        backdrop-filter: blur(14px);
         box-shadow: var(--shadow);
         padding: 24px;
       }
@@ -98,6 +100,7 @@
         background: rgba(247, 244, 240, 0.9);
         color: var(--text);
         padding: 12px 14px;
+        font-size: 16px;
         font: inherit;
       }
 
@@ -135,6 +138,40 @@
 
       .error.show {
         display: block;
+      }
+
+      @media (max-width: 640px) {
+        body {
+          padding: env(safe-area-inset-top, 0) 12px env(safe-area-inset-bottom, 0);
+          align-items: center;
+        }
+
+        .login-shell {
+          width: 100%;
+          padding: 18px;
+          border-radius: 20px;
+        }
+
+        .brand {
+          margin-bottom: 16px;
+        }
+
+        .brand-mark {
+          width: 40px;
+          height: 40px;
+        }
+
+        h1 {
+          font-size: 1.2rem;
+        }
+
+        form {
+          gap: 14px;
+        }
+
+        button {
+          min-height: 46px;
+        }
       }
     </style>
   </head>
