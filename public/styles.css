@@ -605,9 +605,9 @@ body.employee-only-view .team-panel .section-header {
 
 .task-status-select.open,
 .task-pill.open {
-  background: #eaf2ff;
-  color: #1f4ed8;
-  border-color: rgba(31, 78, 216, 0.14);
+  background: #fef3e6;
+  color: #9a6d1e;
+  border-color: rgba(154, 109, 30, 0.14);
 }
 
 .task-status-select.in-progress,
