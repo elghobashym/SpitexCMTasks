@@ -138,18 +138,19 @@ app.put('/api/tasks/:id/status', requireAuth, async (req, res) => {
 
 app.post('/api/tasks', requireAuth, async (req, res) => {
   try {
-    if (!isDorothea(req.session.user)) {
+    const { employeeId, title, description, status } = req.body;
+    const targetEmployeeId = Number(employeeId);
+
+    if (!isDorothea(req.session.user) && targetEmployeeId !== Number(req.session.user.id)) {
       return res.status(403).json({ error: 'Forbidden' });
     }
-
-    const { employeeId, title, description, status } = req.body;
 
     if (!employeeId || !title) {
       return res.status(400).json({ error: 'employeeId and title are required' });
     }
 
     const createdTask = await createTask({
-      employeeId: Number(employeeId),
+      employeeId: targetEmployeeId,
       label: title,
       description: description || '',
       status: status || 'open'

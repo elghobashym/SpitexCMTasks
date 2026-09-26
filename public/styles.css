@@ -206,8 +206,7 @@ h3 {
 
 body.employee-only-view .topnav,
 body.employee-only-view .review-panel,
-body.employee-only-view .task-panel,
-body.employee-only-view #openCreateTaskModal {
+body.employee-only-view .task-panel {
   display: none !important;
 }
 

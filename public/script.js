@@ -19,6 +19,7 @@ const employeesHeading = document.getElementById('employeesHeading');
 const tasksHeading = document.getElementById('tasksHeading');
 const createTaskButton = document.getElementById('openCreateTaskModal');
 const logoutButton = document.getElementById('logoutButton');
+const employeeNameSelect = document.getElementById('employeeName');
 const currentUserName = document.getElementById('currentUserName');
 const currentUserRole = document.getElementById('currentUserRole');
 const taskModal = document.getElementById('taskModal');
@@ -156,6 +157,16 @@ function updateSectionHeadings() {
   }
 }
 
+function updateEmployeeSelectOptions() {
+  if (!employeeNameSelect) return;
+
+  const options = ['<option value="">— Bitte wählen —</option>'];
+  for (const employee of employees) {
+    options.push(`<option value="${employee.name}">${employee.name}</option>`);
+  }
+  employeeNameSelect.innerHTML = options.join('');
+}
+
 function renderEmployeeCards() {
   employeeGrid.innerHTML = employees
     .map(
@@ -275,6 +286,7 @@ function renderTaskBoard() {
 
 function renderDashboard() {
   updateSectionHeadings();
+  updateEmployeeSelectOptions();
   renderSummary();
   renderEmployeeCards();
   if (isDorotheaView()) {
