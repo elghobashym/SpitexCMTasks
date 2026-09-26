@@ -142,6 +142,42 @@ async function initDb() {
          AND EXTRACT(DOW FROM to_date(split_part(t.label, ' - ', 1) || '.' || EXTRACT(YEAR FROM CURRENT_DATE)::text, 'DD.MM.YYYY')) = 5`
     );
 
+    // 5) Selma should never receive these auto-generated tasks.
+    await client.query(
+      `DELETE FROM tasks t
+       USING employees e
+       WHERE t.employee_id = e.id
+         AND e.name = 'Selma'
+         AND split_part(t.label, ' - ', 2) = ANY($1::text[])`,
+      [[
+        'Kunden Termine eintragen',
+        'Dienstplan Kontrolle vor dem WE',
+        'Dienstplan Kontrolle'
+      ]]
+    );
+
+    // 6) Selma: "Pflegeberichte WE kontr. - Rückmeldung Dora" only on Monday.
+    await client.query(
+      `DELETE FROM tasks t
+       USING employees e
+       WHERE t.employee_id = e.id
+         AND e.name = 'Selma'
+         AND split_part(t.label, ' - ', 2) = 'Pflegeberichte WE kontr. - Rückmeldung Dora'
+         AND split_part(t.label, ' - ', 1) ~ '^[0-9]{2}\.[0-9]{2}$'
+         AND EXTRACT(DOW FROM to_date(split_part(t.label, ' - ', 1) || '.' || EXTRACT(YEAR FROM CURRENT_DATE)::text, 'DD.MM.YYYY')) <> 1`
+    );
+
+    // 7) Selma: "Pflegeberichte kontr. - Rückmeldung Dora" on working days except Monday.
+    await client.query(
+      `DELETE FROM tasks t
+       USING employees e
+       WHERE t.employee_id = e.id
+         AND e.name = 'Selma'
+         AND split_part(t.label, ' - ', 2) = 'Pflegeberichte kontr. - Rückmeldung Dora'
+         AND split_part(t.label, ' - ', 1) ~ '^[0-9]{2}\.[0-9]{2}$'
+         AND EXTRACT(DOW FROM to_date(split_part(t.label, ' - ', 1) || '.' || EXTRACT(YEAR FROM CURRENT_DATE)::text, 'DD.MM.YYYY')) = 1`
+    );
+
     const dorotheaResult = await client.query(`SELECT id FROM employees WHERE name = $1 LIMIT 1`, ['Dorothea']);
     if (dorotheaResult.rows.length > 0) {
       const dorotheaId = dorotheaResult.rows[0].id;
@@ -281,6 +317,17 @@ function getWeeklyTaskTitlesForEmployeeDate(employeeName, date) {
     }
     if (dayOfWeek === 5) {
       return ['Kunden Termine eintragen', 'Dienstplan Kontrolle vor dem WE'];
+    }
+    return [];
+  }
+
+  // Selma has custom weekday rules.
+  if (employeeName === 'Selma') {
+    if (dayOfWeek === 1) {
+      return ['Apothekenbestellung', 'Pflegeberichte WE kontr. - Rückmeldung Dora'];
+    }
+    if (dayOfWeek >= 2 && dayOfWeek <= 5) {
+      return ['Apothekenbestellung', 'Pflegeberichte kontr. - Rückmeldung Dora'];
     }
     return [];
   }
