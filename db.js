@@ -95,6 +95,53 @@ async function initDb() {
        WHERE label LIKE '%B�ro%' OR label LIKE '%BÃ¼ro%'`
     );
 
+    // Cleanup for updated weekly generation rules:
+    // 1) Dorothea should not have auto-generated weekly tasks.
+    await client.query(
+      `DELETE FROM tasks t
+       USING employees e
+       WHERE t.employee_id = e.id
+         AND e.name = 'Dorothea'
+         AND split_part(t.label, ' - ', 2) = ANY($1::text[])`,
+      [weeklyTaskTitles]
+    );
+
+    // 2) Ewelina should never receive these auto-generated tasks.
+    await client.query(
+      `DELETE FROM tasks t
+       USING employees e
+       WHERE t.employee_id = e.id
+         AND e.name = 'Ewelina'
+         AND split_part(t.label, ' - ', 2) = ANY($1::text[])`,
+      [[
+        'Pflegeberichte WE kontr. - Rückmeldung Dora',
+        'Pflegeberichte kontr. - Rückmeldung Dora',
+        'Apothekenbestellung'
+      ]]
+    );
+
+    // 3) Ewelina: "Dienstplan Kontrolle vor dem WE" only on Friday.
+    await client.query(
+      `DELETE FROM tasks t
+       USING employees e
+       WHERE t.employee_id = e.id
+         AND e.name = 'Ewelina'
+         AND split_part(t.label, ' - ', 2) = 'Dienstplan Kontrolle vor dem WE'
+         AND split_part(t.label, ' - ', 1) ~ '^[0-9]{2}\.[0-9]{2}$'
+         AND EXTRACT(DOW FROM to_date(split_part(t.label, ' - ', 1) || '.' || EXTRACT(YEAR FROM CURRENT_DATE)::text, 'DD.MM.YYYY')) <> 5`
+    );
+
+    // 4) Ewelina: "Dienstplan Kontrolle" on working days except Friday.
+    await client.query(
+      `DELETE FROM tasks t
+       USING employees e
+       WHERE t.employee_id = e.id
+         AND e.name = 'Ewelina'
+         AND split_part(t.label, ' - ', 2) = 'Dienstplan Kontrolle'
+         AND split_part(t.label, ' - ', 1) ~ '^[0-9]{2}\.[0-9]{2}$'
+         AND EXTRACT(DOW FROM to_date(split_part(t.label, ' - ', 1) || '.' || EXTRACT(YEAR FROM CURRENT_DATE)::text, 'DD.MM.YYYY')) = 5`
+    );
+
     const dorotheaResult = await client.query(`SELECT id FROM employees WHERE name = $1 LIMIT 1`, ['Dorothea']);
     if (dorotheaResult.rows.length > 0) {
       const dorotheaId = dorotheaResult.rows[0].id;
@@ -219,6 +266,28 @@ const weeklyTaskTitles = [
   'Dienstplan Kontrolle'
 ];
 
+function getWeeklyTaskTitlesForEmployeeDate(employeeName, date) {
+  const dayOfWeek = date.getDay();
+
+  // Dorothea should not receive auto-generated weekly tasks.
+  if (employeeName === 'Dorothea') {
+    return [];
+  }
+
+  // Ewelina has custom weekday rules.
+  if (employeeName === 'Ewelina') {
+    if (dayOfWeek >= 1 && dayOfWeek <= 4) {
+      return ['Kunden Termine eintragen', 'Dienstplan Kontrolle'];
+    }
+    if (dayOfWeek === 5) {
+      return ['Kunden Termine eintragen', 'Dienstplan Kontrolle vor dem WE'];
+    }
+    return [];
+  }
+
+  return weeklyTaskTitles;
+}
+
 async function createWeeklyTasks() {
   try {
     // Delete closed tasks first
@@ -250,7 +319,8 @@ async function createWeeklyTasks() {
         const day = String(date.getDate()).padStart(2, '0');
         const month = String(date.getMonth() + 1).padStart(2, '0');
         
-        for (const taskTitle of weeklyTaskTitles) {
+        const taskTitlesForDay = getWeeklyTaskTitlesForEmployeeDate(employee.name, date);
+        for (const taskTitle of taskTitlesForDay) {
           const taskLabel = `${day}.${month} - ${taskTitle}`;
 
           await pool.query(
@@ -317,7 +387,8 @@ async function createImmediateWeeklyTasks() {
         const day = String(date.getDate()).padStart(2, '0');
         const month = String(date.getMonth() + 1).padStart(2, '0');
         
-        for (const taskTitle of weeklyTaskTitles) {
+        const taskTitlesForDay = getWeeklyTaskTitlesForEmployeeDate(employee.name, date);
+        for (const taskTitle of taskTitlesForDay) {
           const taskLabel = `${day}.${month} - ${taskTitle}`;
 
           await pool.query(
