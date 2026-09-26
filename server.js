@@ -1,7 +1,7 @@
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
-const { initDb, getEmployeesWithTasks, updateTaskStatus, createTask, getEmployeeByLoginName, initWeeklyTaskScheduler, createWeeklyTasks, createImmediateWeeklyTasks } = require('./db');
+const { initDb, getEmployeesWithTasks, updateTaskStatus, createTask, reassignTask, getEmployeeByLoginName, initWeeklyTaskScheduler, createWeeklyTasks, createImmediateWeeklyTasks } = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -174,6 +174,27 @@ app.post('/api/generate-weekly-tasks', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Failed to generate weekly tasks:', error);
     res.status(500).json({ error: 'Failed to generate weekly tasks' });
+  }
+});
+
+app.post('/api/tasks/:id/reassign', requireAuth, async (req, res) => {
+  try {
+    if (!isDorothea(req.session.user)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const taskId = Number(req.params.id);
+    const { newEmployeeId } = req.body;
+
+    if (!newEmployeeId) {
+      return res.status(400).json({ error: 'newEmployeeId is required' });
+    }
+
+    await reassignTask(taskId, Number(newEmployeeId));
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Failed to reassign task:', error);
+    res.status(500).json({ error: 'Failed to reassign task' });
   }
 });
 

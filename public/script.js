@@ -194,18 +194,22 @@ function renderEmployeeCards() {
                     <span class="task-bullet-copy">
                       <span>${task.label}</span>
                       ${task.description ? `<small>${task.description}</small>` : ''}
+                      ${isDorotheaView() ? `<small style="display: block; margin-top: 6px; font-size: 0.7rem; color: var(--muted);">Zugewiesen an: <strong>${employee.name}</strong></small>` : ''}
                     </span>
-                    <select class="task-status-select ${statusToClassName(task.status)}" data-employee-id="${employee.id}" data-task-id="${task.id}" aria-label="Status für ${task.label} ändern">
-                      ${statusOptions
-                        .map(
-                          (option) => `
-                            <option value="${option.value}" ${task.status === option.value ? 'selected' : ''}>
-                              ${option.label}
-                            </option>
-                          `
-                        )
-                        .join('')}
-                    </select>
+                    <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">
+                      <select class="task-status-select ${statusToClassName(task.status)}" data-employee-id="${employee.id}" data-task-id="${task.id}" aria-label="Status für ${task.label} ändern">
+                        ${statusOptions
+                          .map(
+                            (option) => `
+                              <option value="${option.value}" ${task.status === option.value ? 'selected' : ''}>
+                                ${option.label}
+                              </option>
+                            `
+                          )
+                          .join('')}
+                      </select>
+                      ${isDorotheaView() ? `<select class="task-reassign-select" data-task-id="${task.id}" data-current-employee-id="${employee.id}" style="font-size: 0.72rem; min-width: 100px;" aria-label="Zuweisen an"><option value="">— Zuweisen —</option>${employees.map((emp) => `<option value="${emp.id}" ${emp.id === employee.id ? 'disabled' : ''}>${emp.name}</option>`).join('')}</select>` : ''}
+                    </div>
                   </div>
                 `
               )
@@ -566,6 +570,35 @@ document.addEventListener('change', async (event) => {
   } catch (error) {
     console.error(error);
     alert('Aufgabenstatus konnte nicht aktualisiert werden. Prüfe deine Konfiguration und Datenbankverbindung.');
+  }
+});
+
+document.addEventListener('change', async (event) => {
+  if (!event.target.classList.contains('task-reassign-select')) {
+    return;
+  }
+
+  const newEmployeeId = event.target.value;
+  if (!newEmployeeId) return;
+
+  try {
+    const taskId = Number(event.target.dataset.taskId);
+    const response = await fetch(`/api/tasks/${taskId}/reassign`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ newEmployeeId: Number(newEmployeeId) })
+    });
+
+    if (!response.ok) {
+      throw new Error('Reassign failed');
+    }
+
+    await loadEmployees();
+    event.target.value = '';
+  } catch (error) {
+    console.error(error);
+    alert('Aufgabe konnte nicht zugewiesen werden.');
+    event.target.value = '';
   }
 });
 
