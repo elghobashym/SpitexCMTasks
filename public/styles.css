@@ -612,9 +612,9 @@ body.employee-only-view .team-panel .section-header {
 
 .task-status-select.in-progress,
 .task-pill.in-progress {
-  background: #fff3df;
-  color: #b76a00;
-  border-color: rgba(183, 106, 0, 0.14);
+  background: #f5d7cc;
+  color: #dd7a52;
+  border-color: rgba(221, 122, 82, 0.14);
 }
 
 .task-status-select.done,
