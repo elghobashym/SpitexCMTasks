@@ -293,6 +293,16 @@ async function deleteClosedTasks() {
   }
 }
 
+async function deleteAllTasks() {
+  try {
+    await pool.query('DELETE FROM tasks');
+    console.log('Deleted all tasks');
+  } catch (error) {
+    console.error('Failed to delete all tasks:', error);
+    throw error;
+  }
+}
+
 const weeklyTaskTitles = [
   'Pflegeberichte WE kontr. - Rückmeldung Dora',
   'Pflegeberichte kontr. - Rückmeldung Dora',
@@ -465,6 +475,7 @@ module.exports = {
   buildDefaultEmployeePassword,
   createWeeklyTasks,
   deleteClosedTasks,
+  deleteAllTasks,
   initWeeklyTaskScheduler,
   createImmediateWeeklyTasks
 };
