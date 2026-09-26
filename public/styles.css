@@ -67,7 +67,7 @@ button {
 
 .topbar-actions {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 12px;
 }
 
@@ -160,6 +160,7 @@ h3 {
   border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 999px;
   padding: 10px 14px;
+  min-height: 44px;
 }
 
 .profile-pill strong {
@@ -177,6 +178,7 @@ h3 {
   background: rgba(255, 255, 255, 0.84);
   color: var(--text);
   padding: 10px 16px;
+  min-height: 44px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -215,7 +217,7 @@ body.employee-only-view .content-grid {
 }
 
 body.employee-only-view .team-panel .section-header {
-  justify-content: flex-start;
+  justify-content: space-between;
 }
 
 .hero-panel {
