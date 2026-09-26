@@ -258,16 +258,6 @@ async function createTask({ employeeId, label, description = '', status = 'open'
   return result.rows[0];
 }
 
-async function reassignTask(taskId, newEmployeeId) {
-  if (!taskId || !newEmployeeId) throw new Error('taskId and newEmployeeId are required');
-  const result = await pool.query(
-    `UPDATE tasks SET employee_id = $1 WHERE id = $2 RETURNING *`,
-    [newEmployeeId, taskId]
-  );
-  if (result.rowCount === 0) throw new Error('Task not found');
-  return result.rows[0];
-}
-
 function hashPassword(password) {
   return crypto.createHash('sha256').update(String(password).trim()).digest('hex');
 }
@@ -467,7 +457,6 @@ module.exports = {
   getEmployeesWithTasks,
   updateTaskStatus,
   createTask,
-  reassignTask,
   getEmployeeByLoginName,
   pool,
   statusOptions,
