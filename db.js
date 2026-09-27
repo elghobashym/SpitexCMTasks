@@ -367,13 +367,13 @@ function getWeeklyTaskTitlesForEmployeeDate(employeeName, date) {
   return weeklyTaskTitles;
 }
 
-function getWeekStartDate(date = new Date()) {
-  const weekStart = new Date(date);
-  const day = weekStart.getDay();
-  const diffToMonday = day === 0 ? -6 : 1 - day;
-  weekStart.setDate(weekStart.getDate() + diffToMonday);
-  weekStart.setHours(0, 0, 0, 0);
-  return weekStart;
+function getNextWeekStartDate(date = new Date()) {
+  const nextWeekStart = new Date(date);
+  const day = nextWeekStart.getDay();
+  const daysUntilNextMonday = day === 0 ? 1 : (8 - day) % 7;
+  nextWeekStart.setDate(nextWeekStart.getDate() + daysUntilNextMonday);
+  nextWeekStart.setHours(0, 0, 0, 0);
+  return nextWeekStart;
 }
 
 async function createWeeklyTasks(date = new Date()) {
@@ -382,7 +382,7 @@ async function createWeeklyTasks(date = new Date()) {
 
     const employeesResult = await pool.query('SELECT id, name FROM employees');
     const employees = employeesResult.rows;
-    const weekStart = getWeekStartDate(date);
+    const weekStart = getNextWeekStartDate(date);
 
     const weekDays = [];
     for (let i = 0; i < 5; i += 1) {
@@ -418,13 +418,13 @@ async function createWeeklyTasks(date = new Date()) {
 function initWeeklyTaskScheduler() {
   const schedule = require('node-schedule');
 
-  // Weekly generation runs Monday at 06:00 for the current week.
-  const job = schedule.scheduleJob('0 6 * * 1', async () => {
+  // Create the upcoming week's tasks every Sunday at 22:00.
+  const job = schedule.scheduleJob('0 22 * * 0', async () => {
     console.log('Running weekly task creation...');
     await createWeeklyTasks(new Date());
   });
 
-  console.log('Weekly task scheduler initialized (runs every Monday at 06:00)');
+  console.log('Weekly task scheduler initialized (runs every Sunday at 10 PM for the upcoming week)');
   return job;
 }
 
@@ -434,7 +434,7 @@ async function createImmediateWeeklyTasks() {
 
     const employeesResult = await pool.query('SELECT id, name FROM employees');
     const employees = employeesResult.rows;
-    const weekStart = getWeekStartDate(new Date());
+    const weekStart = getNextWeekStartDate(new Date());
 
     const weekDays = [];
     for (let i = 0; i < 5; i += 1) {
