@@ -25,6 +25,10 @@ const employeeSeed = [
   { name: 'Dorothea', role: 'Manager', initials: 'DO', variant: 'alt4', review_status: 'review' }
 ];
 
+const loginOnlyUsers = [
+  { name: 'Yolanta', role: 'Mitarbeiter', initials: 'YO', variant: 'alt3' }
+];
+
 const taskSeed = {
   'Ewelina': ['Patient morning care', 'Medical documentation', 'Medication delivery', 'Wound care check', 'Patient communication', 'Equipment maintenance', 'Team handover notes', 'Care plan review', 'Follow-up calls', 'End of shift report'],
   'Selma': ['Patient evening care', 'Vitals monitoring', 'Appointment scheduling', 'Supply order', 'Staff coordination', 'Patient comfort check', 'Health assessment', 'Family communication', 'Quality assurance', 'Shift summary'],
@@ -273,6 +277,24 @@ function buildDefaultEmployeePassword(name) {
 async function getEmployeeByLoginName(loginName, password) {
   const normalizedLogin = normalizeEmployeeName(loginName);
   if (!normalizedLogin || !password) return null;
+
+  const loginOnlyUser = loginOnlyUsers.find(
+    (user) => normalizeEmployeeName(user.name) === normalizedLogin
+  );
+
+  if (loginOnlyUser) {
+    const expectedHash = hashPassword(buildDefaultEmployeePassword(loginOnlyUser.name));
+    if (hashPassword(password) !== expectedHash) return null;
+
+    return {
+      id: null,
+      name: loginOnlyUser.name,
+      role: loginOnlyUser.role,
+      initials: loginOnlyUser.initials,
+      variant: loginOnlyUser.variant
+    };
+  }
+
   const result = await pool.query(
     `SELECT * FROM employees WHERE LOWER(name) = $1 LIMIT 1`,
     [normalizedLogin]
