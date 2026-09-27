@@ -202,6 +202,7 @@ app.get('*', requireAuth, (req, res) => {
 (async () => {
   try {
     await initDb();
+    await createImmediateWeeklyTasks();
     initWeeklyTaskScheduler();
     app.listen(PORT, HOST, () => {
       console.log(`Server running at http://localhost:${PORT}`);

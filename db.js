@@ -367,41 +367,39 @@ function getWeeklyTaskTitlesForEmployeeDate(employeeName, date) {
   return weeklyTaskTitles;
 }
 
-async function createWeeklyTasks() {
+function getWeekStartDate(date = new Date()) {
+  const weekStart = new Date(date);
+  const day = weekStart.getDay();
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+  weekStart.setDate(weekStart.getDate() + diffToMonday);
+  weekStart.setHours(0, 0, 0, 0);
+  return weekStart;
+}
+
+async function createWeeklyTasks(date = new Date()) {
   try {
-    // Delete closed tasks first
     await deleteClosedTasks();
 
-    // Get all employees
     const employeesResult = await pool.query('SELECT id, name FROM employees');
     const employees = employeesResult.rows;
-
-    // Calculate next week's dates (Monday to Friday)
-    const today = new Date();
-    const nextSunday = new Date(today);
-    nextSunday.setDate(today.getDate() + (7 - today.getDay()));
-    
-    // Start from Monday of the next week
-    const mondayDate = new Date(nextSunday);
-    mondayDate.setDate(nextSunday.getDate() + 1);
+    const weekStart = getWeekStartDate(date);
 
     const weekDays = [];
-    for (let i = 0; i < 5; i++) {
-      const date = new Date(mondayDate);
-      date.setDate(mondayDate.getDate() + i);
-      weekDays.push(date);
+    for (let i = 0; i < 5; i += 1) {
+      const dayDate = new Date(weekStart);
+      dayDate.setDate(weekStart.getDate() + i);
+      weekDays.push(dayDate);
     }
 
-    // Create tasks for each employee, each weekday, and each task title
     for (const employee of employees) {
-      for (const date of weekDays) {
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        
-        const taskTitlesForDay = getWeeklyTaskTitlesForEmployeeDate(employee.name, date);
+      for (const currentDate of weekDays) {
+        const day = String(currentDate.getDate()).padStart(2, '0');
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const taskTitlesForDay = getWeeklyTaskTitlesForEmployeeDate(employee.name, currentDate);
+
         for (const taskTitle of taskTitlesForDay) {
           const taskLabel = `${day}.${month} - ${taskTitle}`;
-
+          await pool.query(`DELETE FROM tasks WHERE employee_id = $1 AND label = $2`, [employee.id, taskLabel]);
           await pool.query(
             `INSERT INTO tasks (employee_id, label, status) VALUES ($1, $2, $3)`,
             [employee.id, taskLabel, 'open']
@@ -419,57 +417,41 @@ async function createWeeklyTasks() {
 // Initialize weekly task scheduler
 function initWeeklyTaskScheduler() {
   const schedule = require('node-schedule');
-  
-  // Schedule for every Sunday at 22:00 (10 PM)
-  const job = schedule.scheduleJob('0 22 * * 0', async () => {
+
+  // Weekly generation runs Monday at 06:00 for the current week.
+  const job = schedule.scheduleJob('0 6 * * 1', async () => {
     console.log('Running weekly task creation...');
-    await createWeeklyTasks();
+    await createWeeklyTasks(new Date());
   });
 
-  console.log('Weekly task scheduler initialized (runs every Sunday at 10 PM)');
+  console.log('Weekly task scheduler initialized (runs every Monday at 06:00)');
   return job;
 }
 
 async function createImmediateWeeklyTasks() {
   try {
-    // Delete closed tasks first
     await deleteClosedTasks();
 
-    // Get all employees
     const employeesResult = await pool.query('SELECT id, name FROM employees');
     const employees = employeesResult.rows;
-
-    // Calculate current week's dates (Monday to Friday starting from today or next Monday)
-    const today = new Date();
-    let startDate = new Date(today);
-    
-    // If today is not Monday (0=Sunday, 1=Monday...), move to Monday
-    const dayOfWeek = today.getDay();
-    if (dayOfWeek === 0) {
-      // Sunday - start from tomorrow (Monday)
-      startDate.setDate(today.getDate() + 1);
-    } else if (dayOfWeek !== 1) {
-      // Not Monday/Sunday - move back to Monday of this week
-      startDate.setDate(today.getDate() - (dayOfWeek - 1));
-    }
+    const weekStart = getWeekStartDate(new Date());
 
     const weekDays = [];
-    for (let i = 0; i < 5; i++) {
-      const date = new Date(startDate);
-      date.setDate(startDate.getDate() + i);
-      weekDays.push(date);
+    for (let i = 0; i < 5; i += 1) {
+      const dayDate = new Date(weekStart);
+      dayDate.setDate(weekStart.getDate() + i);
+      weekDays.push(dayDate);
     }
 
-    // Create tasks for each employee, each weekday, and each task title
     for (const employee of employees) {
-      for (const date of weekDays) {
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        
-        const taskTitlesForDay = getWeeklyTaskTitlesForEmployeeDate(employee.name, date);
+      for (const currentDate of weekDays) {
+        const day = String(currentDate.getDate()).padStart(2, '0');
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const taskTitlesForDay = getWeeklyTaskTitlesForEmployeeDate(employee.name, currentDate);
+
         for (const taskTitle of taskTitlesForDay) {
           const taskLabel = `${day}.${month} - ${taskTitle}`;
-
+          await pool.query(`DELETE FROM tasks WHERE employee_id = $1 AND label = $2`, [employee.id, taskLabel]);
           await pool.query(
             `INSERT INTO tasks (employee_id, label, status) VALUES ($1, $2, $3)`,
             [employee.id, taskLabel, 'open']
