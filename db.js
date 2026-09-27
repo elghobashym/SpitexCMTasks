@@ -26,7 +26,7 @@ const employeeSeed = [
 ];
 
 const loginOnlyUsers = [
-  { name: 'Yolanta', role: 'Mitarbeiter', initials: 'YO', variant: 'alt3' }
+  { name: 'Yolanta', role: 'Manager', initials: 'YO', variant: 'alt3' }
 ];
 
 const taskSeed = {

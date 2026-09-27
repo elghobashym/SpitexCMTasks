@@ -33,8 +33,10 @@ function requireAuth(req, res, next) {
   return next();
 }
 
-function isDorothea(user) {
-  return Boolean(user && user.name === 'Dorothea');
+const privilegedUserNames = new Set(['Dorothea', 'Yolanta']);
+
+function hasManagerAccess(user) {
+  return Boolean(user && privilegedUserNames.has(user.name));
 }
 
 app.get('/health', (req, res) => {
@@ -103,7 +105,7 @@ app.get('/dashboard', requireAuth, (req, res) => {
 app.get('/api/employees', requireAuth, async (req, res) => {
   try {
     const employees = await getEmployeesWithTasks();
-    if (isDorothea(req.session.user)) {
+    if (hasManagerAccess(req.session.user)) {
       return res.json(employees);
     }
 
@@ -124,7 +126,7 @@ app.put('/api/tasks/:id/status', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'employeeId and status are required' });
     }
 
-    if (!isDorothea(req.session.user) && Number(employeeId) !== req.session.user.id) {
+    if (!hasManagerAccess(req.session.user) && Number(employeeId) !== req.session.user.id) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
@@ -138,7 +140,7 @@ app.put('/api/tasks/:id/status', requireAuth, async (req, res) => {
 
 app.post('/api/tasks/reset-and-generate', requireAuth, async (req, res) => {
   try {
-    if (!isDorothea(req.session.user)) {
+    if (!hasManagerAccess(req.session.user)) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
@@ -156,7 +158,7 @@ app.post('/api/tasks', requireAuth, async (req, res) => {
     const { employeeId, title, description, status } = req.body;
     const targetEmployeeId = Number(employeeId);
 
-    if (!isDorothea(req.session.user) && targetEmployeeId !== Number(req.session.user.id)) {
+    if (!hasManagerAccess(req.session.user) && targetEmployeeId !== Number(req.session.user.id)) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
@@ -180,7 +182,7 @@ app.post('/api/tasks', requireAuth, async (req, res) => {
 
 app.post('/api/generate-weekly-tasks', requireAuth, async (req, res) => {
   try {
-    if (!isDorothea(req.session.user)) {
+    if (!hasManagerAccess(req.session.user)) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
