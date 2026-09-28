@@ -39,7 +39,7 @@ function hasManagerAccess(user) {
   return Boolean(user && privilegedUserNames.has(user.name));
 }
 
-function canSeeColibri(user) {
+function canSeeKolibri(user) {
   return Boolean(user && user.name !== 'Ewelina');
 }
 
@@ -132,15 +132,15 @@ app.get('/api/tasks/closed', requireAuth, async (req, res) => {
 app.get('/api/employees', requireAuth, async (req, res) => {
   try {
     const employees = await getEmployeesWithTasks();
-    const colibriEmployee = employees.find((employee) => employee.name === 'Colibri');
+    const kolibriEmployee = employees.find((employee) => employee.name === 'Kolibri');
 
     if (hasManagerAccess(req.session.user)) {
       return res.json(employees);
     }
 
     const ownEmployee = employees.filter((employee) => employee.id === req.session.user.id);
-    if (canSeeColibri(req.session.user) && colibriEmployee) {
-      ownEmployee.push(colibriEmployee);
+    if (canSeeKolibri(req.session.user) && kolibriEmployee) {
+      ownEmployee.push(kolibriEmployee);
     }
 
     return res.json(ownEmployee);
@@ -188,27 +188,28 @@ app.post('/api/tasks/reset-and-generate', requireAuth, async (req, res) => {
 
 app.post('/api/tasks', requireAuth, async (req, res) => {
   try {
-    const { employeeId, title, description, status, isColibri } = req.body;
+    const { employeeId, title, description, status, isColibri, isKolibri } = req.body;
+    const kolibriMode = Boolean(isKolibri || isColibri);
     let targetEmployeeId = Number(employeeId);
 
-    if (isColibri) {
-      if (!canSeeColibri(req.session.user)) {
+    if (kolibriMode) {
+      if (!canSeeKolibri(req.session.user)) {
         return res.status(403).json({ error: 'Forbidden' });
       }
 
-      const colibri = await getEmployeeByName('Colibri');
-      if (!colibri) {
-        return res.status(500).json({ error: 'Colibri not found' });
+      const kolibri = await getEmployeeByName('Kolibri');
+      if (!kolibri) {
+        return res.status(500).json({ error: 'Kolibri not found' });
       }
 
-      targetEmployeeId = Number(colibri.id);
+      targetEmployeeId = Number(kolibri.id);
     }
 
-    if (!hasManagerAccess(req.session.user) && !isColibri && targetEmployeeId !== Number(req.session.user.id)) {
+    if (!hasManagerAccess(req.session.user) && !kolibriMode && targetEmployeeId !== Number(req.session.user.id)) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
-    if (!employeeId || !title) {
+    if (!title || (!kolibriMode && !employeeId)) {
       return res.status(400).json({ error: 'employeeId and title are required' });
     }
 

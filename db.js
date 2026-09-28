@@ -95,16 +95,22 @@ async function initDb() {
     );
 
     await client.query(
+      `UPDATE employees
+       SET name = 'Kolibri', initials = 'KO'
+       WHERE name = 'Colibri'`
+    );
+
+    await client.query(
       `INSERT INTO employees (name, role, initials, variant, review_status, login_enabled)
        SELECT $1, $2, $3, $4, $5, FALSE
        WHERE NOT EXISTS (SELECT 1 FROM employees WHERE name = $1)`,
-      ['Colibri', 'Mitarbeiter', 'CO', 'alt5', 'review']
+      ['Kolibri', 'Mitarbeiter', 'KO', 'alt5', 'review']
     );
 
     await client.query(
       `UPDATE employees
        SET login_enabled = FALSE
-       WHERE name = 'Colibri'`
+       WHERE name = 'Kolibri'`
     );
 
     // Remove deprecated account and cascade-delete its task list.
@@ -332,7 +338,7 @@ async function getEmployeeByLoginName(loginName, password) {
   const normalizedLogin = normalizeEmployeeName(loginName);
   if (!normalizedLogin || !password) return null;
 
-  if (normalizedLogin === 'colibri') return null;
+  if (normalizedLogin === 'kolibri' || normalizedLogin === 'colibri') return null;
 
   const loginOnlyUser = loginOnlyUsers.find(
     (user) => normalizeEmployeeName(user.name) === normalizedLogin
@@ -404,8 +410,8 @@ function getWeeklyTaskTitlesForEmployeeDate(employeeName, date) {
     return [];
   }
 
-  // Colibri receives only manually created tasks.
-  if (employeeName === 'Colibri') {
+  // Kolibri receives only manually created tasks.
+  if (employeeName === 'Kolibri') {
     return [];
   }
 

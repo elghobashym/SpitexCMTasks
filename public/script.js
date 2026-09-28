@@ -22,8 +22,8 @@ const tasksHeading = document.getElementById('tasksHeading');
 const createTaskButton = document.getElementById('openCreateTaskModal');
 const logoutButton = document.getElementById('logoutButton');
 const employeeNameSelect = document.getElementById('employeeName');
-const isColibriTaskCheckbox = document.getElementById('isColibriTask');
-const colibriTaskOption = document.getElementById('colibriTaskOption');
+const isKolibriTaskCheckbox = document.getElementById('isKolibriTask');
+const kolibriTaskOption = document.getElementById('kolibriTaskOption');
 const currentUserName = document.getElementById('currentUserName');
 const currentUserRole = document.getElementById('currentUserRole');
 const taskModal = document.getElementById('taskModal');
@@ -52,8 +52,8 @@ function applyUserView() {
   }
 
   if (isDorotheaView()) {
-    if (colibriTaskOption) {
-      colibriTaskOption.style.display = '';
+    if (kolibriTaskOption) {
+      kolibriTaskOption.style.display = '';
     }
     if (closedTasksNav) {
       closedTasksNav.style.display = 'inline-flex';
@@ -66,8 +66,8 @@ function applyUserView() {
     closedTasksNav.style.display = 'none';
   }
 
-  if (colibriTaskOption) {
-    colibriTaskOption.style.display = currentUser?.name === 'Ewelina' ? 'none' : '';
+  if (kolibriTaskOption) {
+    kolibriTaskOption.style.display = currentUser?.name === 'Ewelina' ? 'none' : '';
   }
 
   document.body.classList.add('employee-only-view');
@@ -181,18 +181,18 @@ function updateEmployeeSelectOptions() {
 
   const options = ['<option value="">— Bitte wählen —</option>'];
   for (const employee of employees) {
-    if (employee.name === 'Colibri') continue;
+    if (employee.name === 'Kolibri') continue;
     options.push(`<option value="${employee.name}">${employee.name}</option>`);
   }
   employeeNameSelect.innerHTML = options.join('');
 }
 
-function syncColibriTaskMode() {
-  if (!employeeNameSelect || !isColibriTaskCheckbox) return;
-  const isColibriTask = Boolean(isColibriTaskCheckbox.checked);
-  employeeNameSelect.disabled = isColibriTask;
-  employeeNameSelect.required = !isColibriTask;
-  if (isColibriTask) {
+function syncKolibriTaskMode() {
+  if (!employeeNameSelect || !isKolibriTaskCheckbox) return;
+  const isKolibriTask = Boolean(isKolibriTaskCheckbox.checked);
+  employeeNameSelect.disabled = isKolibriTask;
+  employeeNameSelect.required = !isKolibriTask;
+  if (isKolibriTask) {
     employeeNameSelect.value = '';
   }
 }
@@ -482,10 +482,10 @@ function closeTaskModal() {
     taskForm.reset();
   }
 
-  syncColibriTaskMode();
+  syncKolibriTaskMode();
 }
 
-async function createTaskInLocalApi(employeeId, title, description, status, isColibriTask = false) {
+async function createTaskInLocalApi(employeeId, title, description, status, isKolibriTask = false) {
   const response = await fetch('/api/tasks', {
     method: 'POST',
     headers: {
@@ -496,7 +496,8 @@ async function createTaskInLocalApi(employeeId, title, description, status, isCo
       title,
       description,
       status,
-      isColibri: isColibriTask
+      isKolibri: isKolibriTask,
+      isColibri: isKolibriTask
     })
   });
 
@@ -507,8 +508,8 @@ async function createTaskInLocalApi(employeeId, title, description, status, isCo
   return response.json();
 }
 
-async function createTaskInSupabase(employeeId, title, description, status, isColibriTask = false) {
-  if (isColibriTask) {
+async function createTaskInSupabase(employeeId, title, description, status, isKolibriTask = false) {
+  if (isKolibriTask) {
     return createTaskInLocalApi(employeeId, title, description, status, true);
   }
 
@@ -532,12 +533,12 @@ async function createTaskInSupabase(employeeId, title, description, status, isCo
   return data;
 }
 
-async function createTaskInDatabase(employeeId, title, description, status, isColibriTask = false) {
+async function createTaskInDatabase(employeeId, title, description, status, isKolibriTask = false) {
   if (!hasSupabaseConfig()) {
-    return createTaskInLocalApi(employeeId, title, description, status, isColibriTask);
+    return createTaskInLocalApi(employeeId, title, description, status, isKolibriTask);
   }
 
-  return createTaskInSupabase(employeeId, title, description, status, isColibriTask);
+  return createTaskInSupabase(employeeId, title, description, status, isKolibriTask);
 }
 
 async function logout() {
@@ -572,8 +573,8 @@ taskModal?.addEventListener('click', (event) => {
   }
 });
 
-isColibriTaskCheckbox?.addEventListener('change', syncColibriTaskMode);
-syncColibriTaskMode();
+isKolibriTaskCheckbox?.addEventListener('change', syncKolibriTaskMode);
+syncKolibriTaskMode();
 
 taskForm?.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -581,7 +582,7 @@ taskForm?.addEventListener('submit', async (event) => {
   const formData = new FormData(taskForm);
   const title = String(formData.get('taskTitle') || '').trim();
   const employeeName = String(formData.get('employeeName') || '').trim();
-  const isColibriTask = formData.get('isColibriTask') === 'on';
+  const isKolibriTask = formData.get('isKolibriTask') === 'on';
   const status = String(formData.get('taskStatus') || 'open');
   const description = String(formData.get('taskDescription') || '').trim();
 
@@ -590,21 +591,21 @@ taskForm?.addEventListener('submit', async (event) => {
     return;
   }
 
-  if (!isColibriTask && !employeeName) {
+  if (!isKolibriTask && !employeeName) {
     alert('Bitte gib einen Mitarbeiter ein.');
     return;
   }
 
-  const employee = isColibriTask
+  const employee = isKolibriTask
     ? null
     : employees.find((person) => person.name === employeeName);
-  if (!isColibriTask && !employee) {
+  if (!isKolibriTask && !employee) {
     alert('Mitarbeiter wurde nicht gefunden.');
     return;
   }
 
   try {
-    await createTaskInDatabase(employee?.id || null, title, description, status, isColibriTask);
+    await createTaskInDatabase(employee?.id || null, title, description, status, isKolibriTask);
     await loadEmployees();
   } catch (error) {
     console.error(error);
