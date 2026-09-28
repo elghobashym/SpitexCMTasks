@@ -1,4 +1,5 @@
 const closedTaskTableBody = document.getElementById('closedTaskTableBody');
+const closedTaskList = document.getElementById('closedTaskList');
 const taskSearch = document.getElementById('taskSearch');
 const backToDashboard = document.getElementById('backToDashboard');
 const logoutButton = document.getElementById('logoutButton');
@@ -19,14 +20,41 @@ function formatClosedAt(value) {
 
 function renderRows(tasks) {
   if (!tasks.length) {
-    closedTaskTableBody.innerHTML = `
-      <tr>
-        <td colspan="3">
-          <div class="review-empty">Keine geschlossenen Aufgaben in den letzten 30 Tagen gefunden.</div>
-        </td>
-      </tr>
-    `;
+    if (closedTaskList) {
+      closedTaskList.innerHTML = '<div class="employee-card closed-task-empty"><p>Keine geschlossenen Aufgaben in den letzten 30 Tagen gefunden.</p></div>';
+    }
+    closedTaskTableBody.innerHTML = '';
     return;
+  }
+
+  if (closedTaskList) {
+    closedTaskList.innerHTML = tasks
+      .map(
+        (task) => `
+          <article class="employee-card closed-task-card">
+            <div class="employee-top">
+              <div class="profile-meta">
+                <div class="avatar alt4">${task.employee_name.slice(0, 2).toUpperCase()}</div>
+                <div>
+                  <strong>${task.employee_name}</strong>
+                  <small>Geschlossen: ${formatClosedAt(task.closed_at)}</small>
+                </div>
+              </div>
+              <span class="employee-chip">Geschlossen</span>
+            </div>
+            <div class="employee-tasks">
+              <div class="task-bullet">
+                <span class="task-bullet-copy">
+                  <span>${task.label}</span>
+                  ${task.description ? `<small>${task.description}</small>` : ''}
+                </span>
+                <span class="task-pill closed">Geschlossen</span>
+              </div>
+            </div>
+          </article>
+        `
+      )
+      .join('');
   }
 
   closedTaskTableBody.innerHTML = tasks
@@ -123,12 +151,9 @@ logoutButton?.addEventListener('click', async () => {
     await loadClosedTasks('');
   } catch (error) {
     console.error(error);
-    closedTaskTableBody.innerHTML = `
-      <tr>
-        <td colspan="3">
-          <div class="review-empty">Geschlossene Aufgaben konnten nicht geladen werden.</div>
-        </td>
-      </tr>
-    `;
+    if (closedTaskList) {
+      closedTaskList.innerHTML = '<div class="employee-card closed-task-empty"><p>Geschlossene Aufgaben konnten nicht geladen werden.</p></div>';
+    }
+    closedTaskTableBody.innerHTML = '';
   }
 })();

@@ -506,6 +506,27 @@ body.employee-only-view .team-panel .section-header {
   gap: 18px;
 }
 
+.closed-task-list {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.closed-task-card {
+  min-height: 0;
+}
+
+.closed-task-card .task-bullet {
+  align-items: center;
+}
+
+.closed-task-empty {
+  min-height: 0;
+  padding: 20px;
+}
+
+.closed-task-mobile-table {
+  display: none;
+}
+
 .employee-card {
   padding: 18px 18px 16px;
   border-radius: 26px;
