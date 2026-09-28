@@ -159,11 +159,18 @@ app.put('/api/tasks/:id/status', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'employeeId and status are required' });
     }
 
-    if (!hasManagerAccess(req.session.user) && Number(employeeId) !== req.session.user.id) {
-      return res.status(403).json({ error: 'Forbidden' });
+    const targetEmployeeId = Number(employeeId);
+
+    if (!hasManagerAccess(req.session.user) && targetEmployeeId !== req.session.user.id) {
+      const kolibri = await getEmployeeByName('Kolibri');
+      const isKolibriTask = Boolean(kolibri && Number(kolibri.id) === targetEmployeeId);
+
+      if (!(isKolibriTask && canSeeKolibri(req.session.user))) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
     }
 
-    await updateTaskStatus(Number(employeeId), taskId, status);
+    await updateTaskStatus(targetEmployeeId, taskId, status);
     res.json({ ok: true });
   } catch (error) {
     console.error('Failed to update task status:', error);
