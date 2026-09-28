@@ -377,12 +377,16 @@ function getNextWeekStartDate(date = new Date()) {
 }
 
 async function createWeeklyTasks(date = new Date()) {
+  const now = new Date();
   try {
+    console.log(`[${now.toISOString()}] Starting createWeeklyTasks - input date: ${date.toISOString()}`);
+    
     await deleteClosedTasks();
 
     const employeesResult = await pool.query('SELECT id, name FROM employees');
     const employees = employeesResult.rows;
     const weekStart = getNextWeekStartDate(date);
+    console.log(`[${now.toISOString()}] Calculated week start: ${weekStart.toISOString()} (Monday)`);
 
     const weekDays = [];
     for (let i = 0; i < 5; i += 1) {
@@ -408,33 +412,39 @@ async function createWeeklyTasks(date = new Date()) {
       }
     }
 
-    console.log(`Weekly tasks created for ${employees.length} employees`);
+    console.log(`[${new Date().toISOString()}] Weekly tasks created successfully for ${employees.length} employees`);
   } catch (error) {
-    console.error('Failed to create weekly tasks:', error);
+    console.error(`[${new Date().toISOString()}] Failed to create weekly tasks:`, error);
   }
 }
 
 // Initialize weekly task scheduler
 function initWeeklyTaskScheduler() {
   const schedule = require('node-schedule');
+  const now = new Date();
 
   // Create the upcoming week's tasks every Sunday at 22:00.
   const job = schedule.scheduleJob('0 22 * * 0', async () => {
-    console.log('Running weekly task creation...');
+    const triggerTime = new Date();
+    console.log(`[${triggerTime.toISOString()}] Weekly task scheduler triggered - running task creation...`);
     await createWeeklyTasks(new Date());
   });
 
-  console.log('Weekly task scheduler initialized (runs every Sunday at 10 PM for the upcoming week)');
+  console.log(`[${now.toISOString()}] Weekly task scheduler initialized (runs every Sunday at 22:00 server time, upcoming week Monday-Friday)`);
   return job;
 }
 
 async function createImmediateWeeklyTasks() {
+  const now = new Date();
   try {
+    console.log(`[${now.toISOString()}] Starting immediate weekly task creation (on startup)`);
+    
     await deleteClosedTasks();
 
     const employeesResult = await pool.query('SELECT id, name FROM employees');
     const employees = employeesResult.rows;
     const weekStart = getNextWeekStartDate(new Date());
+    console.log(`[${now.toISOString()}] Calculated week start: ${weekStart.toISOString()} (Monday)`);
 
     const weekDays = [];
     for (let i = 0; i < 5; i += 1) {
@@ -460,9 +470,9 @@ async function createImmediateWeeklyTasks() {
       }
     }
 
-    console.log(`Immediate weekly tasks created for ${employees.length} employees`);
+    console.log(`[${new Date().toISOString()}] Immediate weekly tasks created successfully for ${employees.length} employees`);
   } catch (error) {
-    console.error('Failed to create immediate weekly tasks:', error);
+    console.error(`[${new Date().toISOString()}] Failed to create immediate weekly tasks:`, error);
   }
 }
 

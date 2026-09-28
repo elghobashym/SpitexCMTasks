@@ -201,12 +201,17 @@ app.get('*', requireAuth, (req, res) => {
 
 (async () => {
   try {
+    const startTime = new Date();
+    console.log(`[${startTime.toISOString()}] Server starting - timezone check`);
+    
     await initDb();
     await createImmediateWeeklyTasks();
     initWeeklyTaskScheduler();
+    
     app.listen(PORT, HOST, () => {
-      console.log(`Server running at http://localhost:${PORT}`);
-      console.log(`LAN access: http://${HOST === '0.0.0.0' ? 'YOUR_LOCAL_IP' : HOST}:${PORT}`);
+      const now = new Date();
+      console.log(`[${now.toISOString()}] Server running at http://localhost:${PORT}`);
+      console.log(`[${now.toISOString()}] LAN access: http://${HOST === '0.0.0.0' ? 'YOUR_LOCAL_IP' : HOST}:${PORT}`);
     });
   } catch (error) {
     console.error('Database startup failed:', error);
