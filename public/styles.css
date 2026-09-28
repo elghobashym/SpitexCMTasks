@@ -778,6 +778,18 @@ body.employee-only-view .team-panel .section-header {
   gap: 6px;
 }
 
+.checkbox-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.checkbox-row input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+}
+
 .field-group input,
 .field-group select,
 .field-group textarea {

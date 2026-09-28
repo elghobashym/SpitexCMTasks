@@ -1,7 +1,7 @@
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
-const { initDb, getEmployeesWithTasks, updateTaskStatus, createTask, getClosedTasksLast30Days, getEmployeeByLoginName, initWeeklyTaskScheduler, initDorotheaDailyTestScheduler, createWeeklyTasks, createImmediateWeeklyTasks, deleteAllTasks } = require('./db');
+const { initDb, getEmployeesWithTasks, updateTaskStatus, createTask, getClosedTasksLast30Days, getEmployeeByName, getEmployeeByLoginName, initWeeklyTaskScheduler, initDorotheaDailyTestScheduler, createWeeklyTasks, createImmediateWeeklyTasks, deleteAllTasks } = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -37,6 +37,10 @@ const privilegedUserNames = new Set(['Dorothea', 'Yolanta']);
 
 function hasManagerAccess(user) {
   return Boolean(user && privilegedUserNames.has(user.name));
+}
+
+function canSeeColibri(user) {
+  return Boolean(user && user.name !== 'Ewelina');
 }
 
 app.get('/health', (req, res) => {
@@ -128,11 +132,17 @@ app.get('/api/tasks/closed', requireAuth, async (req, res) => {
 app.get('/api/employees', requireAuth, async (req, res) => {
   try {
     const employees = await getEmployeesWithTasks();
+    const colibriEmployee = employees.find((employee) => employee.name === 'Colibri');
+
     if (hasManagerAccess(req.session.user)) {
       return res.json(employees);
     }
 
     const ownEmployee = employees.filter((employee) => employee.id === req.session.user.id);
+    if (canSeeColibri(req.session.user) && colibriEmployee) {
+      ownEmployee.push(colibriEmployee);
+    }
+
     return res.json(ownEmployee);
   } catch (error) {
     console.error('Failed to load employees:', error);
@@ -178,10 +188,23 @@ app.post('/api/tasks/reset-and-generate', requireAuth, async (req, res) => {
 
 app.post('/api/tasks', requireAuth, async (req, res) => {
   try {
-    const { employeeId, title, description, status } = req.body;
-    const targetEmployeeId = Number(employeeId);
+    const { employeeId, title, description, status, isColibri } = req.body;
+    let targetEmployeeId = Number(employeeId);
 
-    if (!hasManagerAccess(req.session.user) && targetEmployeeId !== Number(req.session.user.id)) {
+    if (isColibri) {
+      if (!canSeeColibri(req.session.user)) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+
+      const colibri = await getEmployeeByName('Colibri');
+      if (!colibri) {
+        return res.status(500).json({ error: 'Colibri not found' });
+      }
+
+      targetEmployeeId = Number(colibri.id);
+    }
+
+    if (!hasManagerAccess(req.session.user) && !isColibri && targetEmployeeId !== Number(req.session.user.id)) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 

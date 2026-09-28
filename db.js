@@ -48,9 +48,12 @@ async function initDb() {
         initials TEXT,
         variant TEXT,
         review_status TEXT DEFAULT 'review',
-        password_hash TEXT DEFAULT ''
+        password_hash TEXT DEFAULT '',
+        login_enabled BOOLEAN NOT NULL DEFAULT TRUE
       )
     `);
+
+    await client.query(`ALTER TABLE employees ADD COLUMN IF NOT EXISTS login_enabled BOOLEAN NOT NULL DEFAULT TRUE`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS tasks (
@@ -89,6 +92,19 @@ async function initDb() {
     await client.query(
       `UPDATE employees SET role = 'Admin' WHERE name = ANY($1::text[])`,
       [['Ewelina', 'Selma']]
+    );
+
+    await client.query(
+      `INSERT INTO employees (name, role, initials, variant, review_status, login_enabled)
+       SELECT $1, $2, $3, $4, $5, FALSE
+       WHERE NOT EXISTS (SELECT 1 FROM employees WHERE name = $1)`,
+      ['Colibri', 'Mitarbeiter', 'CO', 'alt5', 'review']
+    );
+
+    await client.query(
+      `UPDATE employees
+       SET login_enabled = FALSE
+       WHERE name = 'Colibri'`
     );
 
     // Remove deprecated account and cascade-delete its task list.
@@ -316,6 +332,8 @@ async function getEmployeeByLoginName(loginName, password) {
   const normalizedLogin = normalizeEmployeeName(loginName);
   if (!normalizedLogin || !password) return null;
 
+  if (normalizedLogin === 'colibri') return null;
+
   const loginOnlyUser = loginOnlyUsers.find(
     (user) => normalizeEmployeeName(user.name) === normalizedLogin
   );
@@ -334,7 +352,7 @@ async function getEmployeeByLoginName(loginName, password) {
   }
 
   const result = await pool.query(
-    `SELECT * FROM employees WHERE LOWER(name) = $1 LIMIT 1`,
+    `SELECT * FROM employees WHERE LOWER(name) = $1 AND COALESCE(login_enabled, TRUE) = TRUE LIMIT 1`,
     [normalizedLogin]
   );
   if (result.rows.length === 0) return null;
@@ -383,6 +401,11 @@ function getWeeklyTaskTitlesForEmployeeDate(employeeName, date) {
 
   // Dorothea should not receive auto-generated weekly tasks.
   if (employeeName === 'Dorothea') {
+    return [];
+  }
+
+  // Colibri receives only manually created tasks.
+  if (employeeName === 'Colibri') {
     return [];
   }
 
@@ -570,12 +593,21 @@ async function createImmediateWeeklyTasks() {
   }
 }
 
+async function getEmployeeByName(name) {
+  const result = await pool.query(
+    `SELECT * FROM employees WHERE name = $1 LIMIT 1`,
+    [name]
+  );
+  return result.rows[0] || null;
+}
+
 module.exports = {
   initDb,
   getEmployeesWithTasks,
   updateTaskStatus,
   createTask,
   getClosedTasksLast30Days,
+  getEmployeeByName,
   getEmployeeByLoginName,
   pool,
   statusOptions,
