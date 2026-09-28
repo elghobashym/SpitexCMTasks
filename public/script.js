@@ -481,6 +481,11 @@ function openTaskModal() {
   if (taskModal) {
     taskModal.classList.add('open');
   }
+
+  // Auto-select current user for non-manager employees
+  if (employeeNameSelect && currentUser && !isDorotheaView()) {
+    employeeNameSelect.value = currentUser.name;
+  }
 }
 
 function closeTaskModal() {
