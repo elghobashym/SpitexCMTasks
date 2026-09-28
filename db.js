@@ -96,7 +96,7 @@ async function initDb() {
 
     await client.query(
       `UPDATE employees
-       SET name = 'Kolibri', initials = 'KO'
+       SET name = 'Kolibri', initials = 'KO', role = 'Academy'
        WHERE name = 'Colibri'`
     );
 
@@ -104,12 +104,12 @@ async function initDb() {
       `INSERT INTO employees (name, role, initials, variant, review_status, login_enabled)
        SELECT $1, $2, $3, $4, $5, FALSE
        WHERE NOT EXISTS (SELECT 1 FROM employees WHERE name = $1)`,
-      ['Kolibri', 'Mitarbeiter', 'KO', 'alt5', 'review']
+      ['Kolibri', 'Academy', 'KO', 'alt5', 'review']
     );
 
     await client.query(
       `UPDATE employees
-       SET login_enabled = FALSE
+       SET login_enabled = FALSE, role = 'Academy'
        WHERE name = 'Kolibri'`
     );
 
