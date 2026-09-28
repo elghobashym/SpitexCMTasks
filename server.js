@@ -33,7 +33,7 @@ function requireAuth(req, res, next) {
   return next();
 }
 
-const privilegedUserNames = new Set(['Dorothea', 'Yolanta']);
+const privilegedUserNames = new Set(['Dorothea', 'Jolanta']);
 
 function hasManagerAccess(user) {
   return Boolean(user && privilegedUserNames.has(user.name));

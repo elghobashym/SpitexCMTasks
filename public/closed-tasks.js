@@ -66,7 +66,7 @@ async function validateManagerAccess() {
 
   const data = await response.json();
   const userName = data?.user?.name;
-  if (!userName || !['Dorothea', 'Yolanta'].includes(userName)) {
+  if (!userName || !['Dorothea', 'Jolanta'].includes(userName)) {
     window.location.href = '/dashboard';
     return false;
   }

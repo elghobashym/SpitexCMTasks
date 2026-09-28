@@ -39,7 +39,7 @@ let employees = [];
 let currentUser = null;
 
 function isDorotheaView() {
-  return currentUser?.name === 'Dorothea' || currentUser?.name === 'Yolanta';
+  return currentUser?.name === 'Dorothea' || currentUser?.name === 'Jolanta';
 }
 
 function applyUserView() {
