@@ -506,25 +506,44 @@ body.employee-only-view .team-panel .section-header {
   gap: 18px;
 }
 
-.closed-task-list {
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+.closed-task-table-wrap {
+  margin-top: 8px;
 }
 
-.closed-task-card {
-  min-height: 0;
+.closed-task-table {
+  border-collapse: separate;
+  border-spacing: 0 10px;
 }
 
-.closed-task-card .task-bullet {
-  align-items: center;
+.closed-task-table thead th {
+  padding: 14px 18px;
 }
 
-.closed-task-empty {
-  min-height: 0;
-  padding: 20px;
+.closed-task-table tbody td {
+  padding: 16px 18px;
+  background: rgba(255, 255, 255, 0.88);
+  border-top: 1px solid rgba(30, 31, 37, 0.06);
+  border-bottom: 1px solid rgba(30, 31, 37, 0.06);
+  vertical-align: middle;
 }
 
-.closed-task-mobile-table {
-  display: none;
+.closed-task-table tbody td:first-child {
+  border-left: 1px solid rgba(30, 31, 37, 0.06);
+  border-top-left-radius: 14px;
+  border-bottom-left-radius: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.closed-task-table tbody td:last-child {
+  border-right: 1px solid rgba(30, 31, 37, 0.06);
+  border-top-right-radius: 14px;
+  border-bottom-right-radius: 14px;
+}
+
+.closed-task-empty-row {
+  text-align: center;
+  color: var(--muted);
 }
 
 .employee-card {
