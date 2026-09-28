@@ -31,6 +31,7 @@ const cancelTaskModalButton = document.getElementById('cancelTaskModal');
 const reviewPanel = document.getElementById('reviews');
 const taskPanel = document.getElementById('tasks');
 const topnav = document.querySelector('.topnav');
+const closedTasksNav = document.getElementById('closedTasksNav');
 
 let employees = [];
 let currentUser = null;
@@ -49,8 +50,15 @@ function applyUserView() {
   }
 
   if (isDorotheaView()) {
+    if (closedTasksNav) {
+      closedTasksNav.style.display = 'inline-flex';
+    }
     document.body.classList.remove('employee-only-view');
     return;
+  }
+
+  if (closedTasksNav) {
+    closedTasksNav.style.display = 'none';
   }
 
   document.body.classList.add('employee-only-view');

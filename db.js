@@ -58,9 +58,12 @@ async function initDb() {
         employee_id INTEGER NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
         label TEXT NOT NULL,
         description TEXT DEFAULT '',
-        status TEXT NOT NULL DEFAULT 'open'
+        status TEXT NOT NULL DEFAULT 'open',
+        closed_at TIMESTAMP NULL
       )
     `);
+
+    await client.query(`ALTER TABLE tasks ADD COLUMN IF NOT EXISTS closed_at TIMESTAMP NULL`);
 
     const employeeCount = await client.query('SELECT COUNT(*) AS count FROM employees');
     if (Number(employeeCount.rows[0].count) === 0) {
@@ -91,7 +94,12 @@ async function initDb() {
     // Remove deprecated account and cascade-delete its task list.
     await client.query(`DELETE FROM employees WHERE name = 'Praktikantin'`);
 
-    await client.query(`DELETE FROM tasks WHERE status = 'closed'`);
+    await client.query(
+      `DELETE FROM tasks
+       WHERE status = 'closed'
+         AND closed_at IS NOT NULL
+         AND closed_at < NOW() - INTERVAL '30 days'`
+    );
 
     await client.query(
       `UPDATE tasks
@@ -232,8 +240,11 @@ async function getEmployeesWithTasks() {
 async function updateTaskStatus(employeeId, taskId, newStatus) {
   if (!statusOptions.includes(newStatus)) throw new Error('Invalid status');
   if (newStatus === 'closed') {
-    const deleteResult = await pool.query(`DELETE FROM tasks WHERE id = $1 AND employee_id = $2`, [taskId, employeeId]);
-    if (deleteResult.rowCount === 0) throw new Error('Task not found');
+    const closeResult = await pool.query(
+      `UPDATE tasks SET status = $1, closed_at = NOW() WHERE id = $2 AND employee_id = $3`,
+      [newStatus, taskId, employeeId]
+    );
+    if (closeResult.rowCount === 0) throw new Error('Task not found');
     return;
   }
   if (newStatus === 'review') {
@@ -248,8 +259,35 @@ async function updateTaskStatus(employeeId, taskId, newStatus) {
     await pool.query(`UPDATE employees SET review_status = $1 WHERE id = $2`, ['review', dorotheaId]);
     return;
   }
-  const result = await pool.query(`UPDATE tasks SET status = $1 WHERE id = $2 AND employee_id = $3`, [newStatus, taskId, employeeId]);
+  const result = await pool.query(
+    `UPDATE tasks SET status = $1, closed_at = NULL WHERE id = $2 AND employee_id = $3`,
+    [newStatus, taskId, employeeId]
+  );
   if (result.rowCount === 0) throw new Error('Task not found');
+}
+
+async function getClosedTasksLast30Days(searchTerm = '') {
+  const normalizedSearch = String(searchTerm || '').trim();
+  const params = [];
+  let whereSearch = '';
+
+  if (normalizedSearch) {
+    params.push(`%${normalizedSearch}%`);
+    whereSearch = ` AND t.label ILIKE $${params.length}`;
+  }
+
+  const result = await pool.query(
+    `SELECT t.id, t.label, t.description, t.closed_at, e.name AS employee_name
+     FROM tasks t
+     JOIN employees e ON e.id = t.employee_id
+     WHERE t.status = 'closed'
+       AND t.closed_at IS NOT NULL
+       AND t.closed_at >= NOW() - INTERVAL '30 days'${whereSearch}
+     ORDER BY t.closed_at DESC`,
+    params
+  );
+
+  return result.rows;
 }
 
 async function createTask({ employeeId, label, description = '', status = 'open' }) {
@@ -308,8 +346,14 @@ async function getEmployeeByLoginName(loginName, password) {
 
 async function deleteClosedTasks() {
   try {
-    await pool.query('DELETE FROM tasks WHERE status = $1', ['closed']);
-    console.log('Cleaned up closed tasks');
+    await pool.query(
+      `DELETE FROM tasks
+       WHERE status = $1
+         AND closed_at IS NOT NULL
+         AND closed_at < NOW() - INTERVAL '30 days'`,
+      ['closed']
+    );
+    console.log('Cleaned up closed tasks older than 30 days');
   } catch (error) {
     console.error('Failed to delete closed tasks:', error);
   }
@@ -531,6 +575,7 @@ module.exports = {
   getEmployeesWithTasks,
   updateTaskStatus,
   createTask,
+  getClosedTasksLast30Days,
   getEmployeeByLoginName,
   pool,
   statusOptions,

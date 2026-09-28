@@ -1,7 +1,7 @@
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
-const { initDb, getEmployeesWithTasks, updateTaskStatus, createTask, getEmployeeByLoginName, initWeeklyTaskScheduler, initDorotheaDailyTestScheduler, createWeeklyTasks, createImmediateWeeklyTasks, deleteAllTasks } = require('./db');
+const { initDb, getEmployeesWithTasks, updateTaskStatus, createTask, getClosedTasksLast30Days, getEmployeeByLoginName, initWeeklyTaskScheduler, initDorotheaDailyTestScheduler, createWeeklyTasks, createImmediateWeeklyTasks, deleteAllTasks } = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -100,6 +100,29 @@ app.get('/', (req, res) => {
 
 app.get('/dashboard', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/closed-tasks', requireAuth, (req, res) => {
+  if (!hasManagerAccess(req.session.user)) {
+    return res.redirect('/dashboard');
+  }
+
+  return res.sendFile(path.join(__dirname, 'public', 'closed-tasks.html'));
+});
+
+app.get('/api/tasks/closed', requireAuth, async (req, res) => {
+  try {
+    if (!hasManagerAccess(req.session.user)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const search = req.query.search || '';
+    const tasks = await getClosedTasksLast30Days(search);
+    return res.json(tasks);
+  } catch (error) {
+    console.error('Failed to load closed tasks:', error);
+    return res.status(500).json({ error: 'Failed to load closed tasks' });
+  }
 });
 
 app.get('/api/employees', requireAuth, async (req, res) => {

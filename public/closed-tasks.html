@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Geschlossene Aufgaben</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <div class="brand-wrap">
+          <div class="brand-mark" aria-hidden="true">
+            <img src="header-logo.png" alt="" class="brand-logo" />
+          </div>
+          <div>
+            <p class="eyebrow">Historie</p>
+            <h1>Geschlossene Aufgaben (30 Tage)</h1>
+          </div>
+        </div>
+
+        <div class="topbar-actions">
+          <button class="secondary-btn" id="backToDashboard" type="button">Zurück zum Dashboard</button>
+          <button class="logout-btn" id="logoutButton" type="button">Abmelden</button>
+        </div>
+      </header>
+
+      <main class="dashboard">
+        <section class="team-panel">
+          <div class="section-header">
+            <div>
+              <p class="eyebrow soft">Filter</p>
+              <h3>Suche nach Aufgabenname</h3>
+            </div>
+          </div>
+
+          <div class="field-group" style="max-width: 420px; margin-bottom: 14px;">
+            <label for="taskSearch">Aufgabenname</label>
+            <input id="taskSearch" type="text" placeholder="z. B. Apothekenbestellung" />
+          </div>
+
+          <div class="task-table-container">
+            <table class="task-table">
+              <thead>
+                <tr>
+                  <th>Geschlossen am</th>
+                  <th>Aufgabe</th>
+                  <th>Mitarbeiter</th>
+                </tr>
+              </thead>
+              <tbody id="closedTaskTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="closed-tasks.js"></script>
+  </body>
+</html>
