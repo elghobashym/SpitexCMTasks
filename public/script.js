@@ -38,6 +38,15 @@ const closedTasksNav = document.getElementById('closedTasksNav');
 let employees = [];
 let currentUser = null;
 
+function swapEmployeePositions(nameA, nameB) {
+  const firstIndex = employees.findIndex((employee) => employee.name === nameA);
+  const secondIndex = employees.findIndex((employee) => employee.name === nameB);
+
+  if (firstIndex === -1 || secondIndex === -1) return;
+
+  [employees[firstIndex], employees[secondIndex]] = [employees[secondIndex], employees[firstIndex]];
+}
+
 function isDorotheaView() {
   return currentUser?.name === 'Dorothea' || currentUser?.name === 'Jolanta';
 }
@@ -330,6 +339,7 @@ function renderTaskBoard() {
 }
 
 function renderDashboard() {
+  swapEmployeePositions('Dorothea', 'Kolibri');
   updateSectionHeadings();
   updateEmployeeSelectOptions();
   renderSummary();
