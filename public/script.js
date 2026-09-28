@@ -12,6 +12,8 @@ const statusMap = Object.fromEntries(
 const employeeGrid = document.getElementById('employeeGrid');
 const taskTableBody = document.getElementById('taskTableBody');
 const reviewChecklist = document.getElementById('reviewChecklist');
+const reviewPendingCount = document.getElementById('reviewPendingCount');
+const reviewApprovalRate = document.getElementById('reviewApprovalRate');
 const summaryStatsBlock = document.getElementById('summaryStats');
 const overviewLabel = document.getElementById('overviewLabel');
 const overviewTitle = document.getElementById('overviewTitle');
@@ -245,6 +247,21 @@ function renderReviewChecklist() {
     : '<div class="review-empty">Keine Aufgaben zur Prüfung</div>';
 }
 
+function renderReviewSummary() {
+  if (!reviewPendingCount || !reviewApprovalRate) return;
+
+  const allTasks = employees.flatMap((employee) => employee.tasks || []);
+  const activeTasks = allTasks.filter((task) => task.status !== 'closed');
+  const pendingReview = activeTasks.filter((task) => task.status === 'review').length;
+  const approvedCount = activeTasks.length - pendingReview;
+  const approvalPercent = activeTasks.length
+    ? Math.round((approvedCount / activeTasks.length) * 100)
+    : 0;
+
+  reviewPendingCount.textContent = `${pendingReview} ausstehend`;
+  reviewApprovalRate.textContent = `${approvalPercent}%`;
+}
+
 function renderTaskBoard() {
   taskTableBody.innerHTML = employees
     .map(
@@ -290,6 +307,7 @@ function renderDashboard() {
   renderSummary();
   renderEmployeeCards();
   if (isDorotheaView()) {
+    renderReviewSummary();
     renderReviewChecklist();
     renderTaskBoard();
   }
