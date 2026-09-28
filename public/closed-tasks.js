@@ -31,8 +31,8 @@ function renderRows(tasks) {
     .map(
       (task) => `
         <tr>
-          <td>${formatClosedAt(task.closed_at)}</td>
           <td>${task.label}</td>
+          <td>${formatClosedAt(task.closed_at)}</td>
           <td>${task.employee_name}</td>
         </tr>
       `
