@@ -455,36 +455,6 @@ function formatDayMonth(date = new Date()) {
   return `${day}.${month}`;
 }
 
-async function createDorotheaDailyTestTask(date = new Date()) {
-  const now = new Date();
-  try {
-    const dayOfWeek = date.getDay();
-    if (dayOfWeek === 0 || dayOfWeek === 6) {
-      console.log(`[${now.toISOString()}] Skipping Dorothea daily test task - weekend`);
-      return;
-    }
-
-    const dorotheaResult = await pool.query(`SELECT id FROM employees WHERE name = $1 LIMIT 1`, ['Dorothea']);
-    if (dorotheaResult.rows.length === 0) {
-      console.log(`[${now.toISOString()}] Dorothea not found - daily test task not created`);
-      return;
-    }
-
-    const dorotheaId = dorotheaResult.rows[0].id;
-    const taskLabel = `${formatDayMonth(date)} test`;
-
-    await pool.query(`DELETE FROM tasks WHERE employee_id = $1 AND label = $2`, [dorotheaId, taskLabel]);
-    await pool.query(
-      `INSERT INTO tasks (employee_id, label, status) VALUES ($1, $2, $3)`,
-      [dorotheaId, taskLabel, 'open']
-    );
-
-    console.log(`[${now.toISOString()}] Dorothea daily test task created: ${taskLabel}`);
-  } catch (error) {
-    console.error(`[${new Date().toISOString()}] Failed to create Dorothea daily test task:`, error);
-  }
-}
-
 async function createWeeklyTasks(date = new Date()) {
   const now = new Date();
   try {
@@ -540,20 +510,6 @@ function initWeeklyTaskScheduler() {
   });
 
   console.log(`[${now.toISOString()}] Weekly task scheduler initialized (runs every Sunday at 22:00 server time, upcoming week Monday-Friday)`);
-  return job;
-}
-
-function initDorotheaDailyTestScheduler() {
-  const schedule = require('node-schedule');
-  const now = new Date();
-
-  const job = schedule.scheduleJob('0 14 * * 1-5', async () => {
-    const triggerTime = new Date();
-    console.log(`[${triggerTime.toISOString()}] Dorothea daily test scheduler triggered - creating task...`);
-    await createDorotheaDailyTestTask(new Date());
-  });
-
-  console.log(`[${now.toISOString()}] Dorothea daily test scheduler initialized (runs Monday-Friday at 14:00 server time)`);
   return job;
 }
 
@@ -621,10 +577,8 @@ module.exports = {
   normalizeEmployeeName,
   buildDefaultEmployeePassword,
   createWeeklyTasks,
-  createDorotheaDailyTestTask,
   deleteClosedTasks,
   deleteAllTasks,
   initWeeklyTaskScheduler,
-  initDorotheaDailyTestScheduler,
   createImmediateWeeklyTasks
 };

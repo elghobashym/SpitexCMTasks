@@ -1,7 +1,7 @@
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
-const { initDb, getEmployeesWithTasks, updateTaskStatus, createTask, getClosedTasksLast30Days, getEmployeeByName, getEmployeeByLoginName, initWeeklyTaskScheduler, initDorotheaDailyTestScheduler, createWeeklyTasks, createImmediateWeeklyTasks, deleteAllTasks } = require('./db');
+const { initDb, getEmployeesWithTasks, updateTaskStatus, createTask, getClosedTasksLast30Days, getEmployeeByName, getEmployeeByLoginName, initWeeklyTaskScheduler, createWeeklyTasks, createImmediateWeeklyTasks, deleteAllTasks } = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -261,7 +261,6 @@ app.get('*', requireAuth, (req, res) => {
     await initDb();
     await createImmediateWeeklyTasks();
     initWeeklyTaskScheduler();
-    initDorotheaDailyTestScheduler();
     
     app.listen(PORT, HOST, () => {
       const now = new Date();
